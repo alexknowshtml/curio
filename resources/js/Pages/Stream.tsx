@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { useMemo, useRef, useLayoutEffect } from 'react';
+import { useMemo, useRef, useLayoutEffect, useState, useCallback } from 'react';
 
 interface Tag {
     id: number;
@@ -53,10 +53,49 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
+    // Optimistic entries that haven't been confirmed by server yet
+    const [optimisticEntries, setOptimisticEntries] = useState<Entry[]>([]);
+
+    // Combine server entries with optimistic ones
+    const allEntries = useMemo(() => {
+        // Filter out any optimistic entries that now exist in server data (by matching content + approximate time)
+        const serverIds = new Set(entries.map(e => e.id));
+        const pendingOptimistic = optimisticEntries.filter(opt => !serverIds.has(opt.id));
+        return [...entries, ...pendingOptimistic];
+    }, [entries, optimisticEntries]);
+
+    // Callback for optimistic entry creation
+    const handleOptimisticEntry = useCallback((content: string, images: { id: number; url: string; filename: string }[]) => {
+        const optimisticEntry: Entry = {
+            id: -Date.now(), // Negative ID to avoid conflicts
+            content,
+            created_at: new Date().toISOString(),
+            tags: [], // Tags will be populated when server responds
+            images,
+        };
+        setOptimisticEntries(prev => [...prev, optimisticEntry]);
+
+        // Scroll to bottom after adding
+        setTimeout(() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 50);
+    }, []);
+
+    // Clear optimistic entries when server data updates (entries prop changes)
+    useLayoutEffect(() => {
+        if (optimisticEntries.length > 0) {
+            // Give a small delay to let the real entry render, then clear optimistic
+            const timeout = setTimeout(() => {
+                setOptimisticEntries([]);
+            }, 100);
+            return () => clearTimeout(timeout);
+        }
+    }, [entries]);
+
     // Group entries by date and sort oldest first within each day
     const entriesByDate = useMemo(() => {
         const groups: Record<string, Entry[]> = {};
-        for (const entry of entries) {
+        for (const entry of allEntries) {
             const dateKey = format(parseISO(entry.created_at), 'yyyy-MM-dd');
             if (!groups[dateKey]) {
                 groups[dateKey] = [];
@@ -70,7 +109,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
             );
         }
         return groups;
-    }, [entries]);
+    }, [allEntries]);
 
     // Sort dates oldest first so newest day is at the bottom
     const sortedDates = useMemo(() => {
@@ -214,7 +253,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                 {/* Input area */}
                 <div data-input-bar className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3 pb-safe">
                     <div className="max-w-3xl mx-auto">
-                        <EntryInput />
+                        <EntryInput onOptimisticSubmit={handleOptimisticEntry} />
                     </div>
                 </div>
             </div>

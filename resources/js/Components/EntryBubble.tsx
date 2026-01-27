@@ -41,6 +41,9 @@ export function EntryBubble({ entry, onTagClick }: Props) {
     const timeStr = format(createdAt, 'h:mm a');
     const dateStr = format(createdAt, 'MMM d');
 
+    // Optimistic entries have negative IDs
+    const isOptimistic = entry.id < 0;
+
     const handleDelete = () => {
         if (confirm('Delete this entry?')) {
             router.delete(`/entries/${entry.id}`, {
@@ -50,7 +53,7 @@ export function EntryBubble({ entry, onTagClick }: Props) {
     };
 
     return (
-        <div className="group relative">
+        <div className={`group relative ${isOptimistic ? 'opacity-70' : ''}`}>
             {/* Images */}
             {entry.images && entry.images.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -113,18 +116,20 @@ export function EntryBubble({ entry, onTagClick }: Props) {
             {/* Footer: timestamp and actions */}
             <div className="mt-2 flex items-center justify-between">
                 <span className="text-xs text-stone-400 dark:text-stone-500">
-                    {timeStr} · {dateStr}
+                    {isOptimistic ? 'Saving...' : `${timeStr} · ${dateStr}`}
                 </span>
 
-                {/* Delete button - shows on hover */}
-                <button
-                    onClick={handleDelete}
-                    className="opacity-0 group-hover:opacity-100 text-xs text-stone-400 hover:text-rose-500
-                               dark:text-stone-500 dark:hover:text-rose-400
-                               transition-all duration-150"
-                >
-                    Delete
-                </button>
+                {/* Delete button - shows on hover (not for optimistic entries) */}
+                {!isOptimistic && (
+                    <button
+                        onClick={handleDelete}
+                        className="opacity-0 group-hover:opacity-100 text-xs text-stone-400 hover:text-rose-500
+                                   dark:text-stone-500 dark:hover:text-rose-400
+                                   transition-all duration-150"
+                    >
+                        Delete
+                    </button>
+                )}
             </div>
         </div>
     );

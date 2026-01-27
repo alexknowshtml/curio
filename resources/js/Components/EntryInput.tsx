@@ -8,7 +8,11 @@ interface PendingImage {
     filename: string;
 }
 
-export function EntryInput() {
+interface EntryInputProps {
+    onOptimisticSubmit?: (content: string, images: PendingImage[]) => void;
+}
+
+export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -111,21 +115,26 @@ export function EntryInput() {
         // Allow submit if there's content OR images
         if ((!content.trim() && pendingImages.length === 0) || isSubmitting) return;
 
-        setIsSubmitting(true);
+        const submittedContent = content || '(image)';
+        const submittedImages = [...pendingImages];
 
+        // Optimistic update - immediately show the entry and clear input
+        onOptimisticSubmit?.(submittedContent, submittedImages);
+        setContent('');
+        setPendingImages([]);
+        textareaRef.current?.focus();
+
+        // Send to server in background
         router.post('/entries', {
-            content: content || '(image)',
-            image_ids: pendingImages.map((img) => img.id),
+            content: submittedContent,
+            image_ids: submittedImages.map((img) => img.id),
         }, {
             preserveScroll: true,
-            onSuccess: () => {
-                setContent('');
-                setPendingImages([]);
-                setIsSubmitting(false);
-                textareaRef.current?.focus();
-            },
+            preserveState: true,
             onError: () => {
-                setIsSubmitting(false);
+                // Restore content on error
+                setContent(submittedContent);
+                setPendingImages(submittedImages);
             },
         });
     };
