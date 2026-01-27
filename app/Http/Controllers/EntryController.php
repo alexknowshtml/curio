@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Entry;
 use App\Services\TagParserService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -27,6 +28,14 @@ class EntryController extends Controller
             });
         }
 
+        // Filter by date if provided
+        $selectedDate = null;
+        if ($request->has('date')) {
+            $selectedDate = $request->input('date');
+            $date = Carbon::parse($selectedDate);
+            $query->whereDate('created_at', $date);
+        }
+
         $entries = $query->limit(100)->get();
 
         // Get all tags for the filter sidebar
@@ -34,10 +43,20 @@ class EntryController extends Controller
             $q->where('user_id', Auth::id());
         })->orderBy('sigil')->orderBy('name')->get();
 
+        // Get dates that have entries (for the date picker)
+        $datesWithEntries = Entry::where('user_id', Auth::id())
+            ->selectRaw('DATE(created_at) as date')
+            ->groupBy('date')
+            ->orderBy('date', 'desc')
+            ->pluck('date')
+            ->toArray();
+
         return Inertia::render('Stream', [
             'entries' => $entries,
             'allTags' => $allTags,
             'activeTagId' => $request->input('tag'),
+            'selectedDate' => $selectedDate,
+            'datesWithEntries' => $datesWithEntries,
         ]);
     }
 
