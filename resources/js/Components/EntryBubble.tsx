@@ -74,7 +74,7 @@ export function EntryBubble({ entry, onTagClick }: Props) {
 
             {/* Content with markdown rendering */}
             <div className="text-gray-900 dark:text-gray-100 prose prose-sm dark:prose-invert max-w-none
-                           prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0
+                           font-serif prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0
                            prose-a:text-blue-600 dark:prose-a:text-blue-400">
                 <ReactMarkdown>{entry.content}</ReactMarkdown>
             </div>
