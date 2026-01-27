@@ -193,3 +193,8 @@ body {
 #app {
     height: 100%;
 }
+
+/* Smooth keyboard position animation for input bar */
+[data-input-bar] {
+    transition: transform 0.15s ease-out;
+}

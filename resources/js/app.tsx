@@ -28,9 +28,41 @@ function updateKeyboardPosition() {
     }
 }
 
+// Run continuously during keyboard animation for smoother positioning
+let animationFrameId: number | null = null;
+function scheduleUpdate() {
+    if (animationFrameId) return;
+    animationFrameId = requestAnimationFrame(() => {
+        animationFrameId = null;
+        updateKeyboardPosition();
+    });
+}
+
 updateKeyboardPosition();
-window.visualViewport?.addEventListener('resize', updateKeyboardPosition);
-window.visualViewport?.addEventListener('scroll', updateKeyboardPosition);
+window.visualViewport?.addEventListener('resize', scheduleUpdate);
+window.visualViewport?.addEventListener('scroll', scheduleUpdate);
+
+// Also listen for focus/blur on inputs to catch keyboard earlier
+document.addEventListener('focusin', (e) => {
+    if ((e.target as HTMLElement)?.tagName === 'TEXTAREA' || (e.target as HTMLElement)?.tagName === 'INPUT') {
+        // Poll for a bit as keyboard animates in
+        const pollEnd = Date.now() + 500;
+        const poll = () => {
+            updateKeyboardPosition();
+            if (Date.now() < pollEnd) requestAnimationFrame(poll);
+        };
+        poll();
+    }
+});
+document.addEventListener('focusout', () => {
+    // Poll as keyboard animates out
+    const pollEnd = Date.now() + 300;
+    const poll = () => {
+        updateKeyboardPosition();
+        if (Date.now() < pollEnd) requestAnimationFrame(poll);
+    };
+    poll();
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
