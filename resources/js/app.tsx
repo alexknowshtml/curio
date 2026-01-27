@@ -6,15 +6,19 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 // iOS Safari keyboard viewport fix
-// Sets --vh CSS variable to actual visual viewport height
-function setViewportHeight() {
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-    document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
+// Sets --keyboard-offset CSS variable to the bottom offset when keyboard opens
+function updateKeyboardOffset() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    // Calculate how much the visual viewport is offset from the layout viewport
+    const offset = window.innerHeight - vv.height - vv.offsetTop;
+    document.documentElement.style.setProperty('--keyboard-offset', `${Math.max(0, offset)}px`);
 }
 
-setViewportHeight();
-window.visualViewport?.addEventListener('resize', setViewportHeight);
-window.addEventListener('resize', setViewportHeight);
+updateKeyboardOffset();
+window.visualViewport?.addEventListener('resize', updateKeyboardOffset);
+window.visualViewport?.addEventListener('scroll', updateKeyboardOffset);
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

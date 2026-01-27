@@ -43,7 +43,7 @@
 
     /* PWA safe area utilities */
     .pt-safe { padding-top: var(--safe-top); }
-    .pb-safe { padding-bottom: calc(12px + var(--safe-bottom)); }
+    .pb-safe { padding-bottom: calc(12px + var(--safe-bottom) + var(--keyboard-offset, 0px)); }
     .pl-safe { padding-left: var(--safe-left); }
     .pr-safe { padding-right: var(--safe-right); }
     .p-safe {
@@ -178,10 +178,13 @@ html, body {
 }
 
 /* iOS Safari viewport handling */
+:root {
+    --keyboard-offset: 0px;
+}
+
 body {
     height: 100vh;
     height: 100dvh;
-    height: calc(var(--vh, 1vh) * 100);
     padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
