@@ -43,7 +43,7 @@
 
     /* PWA safe area utilities */
     .pt-safe { padding-top: var(--safe-top); }
-    .pb-safe { padding-bottom: calc(12px + var(--safe-bottom) + var(--keyboard-offset, 0px)); }
+    .pb-safe { padding-bottom: calc(12px + var(--safe-bottom)); }
     .pl-safe { padding-left: var(--safe-left); }
     .pr-safe { padding-right: var(--safe-right); }
     .p-safe {

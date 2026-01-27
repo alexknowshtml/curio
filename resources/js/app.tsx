@@ -6,24 +6,31 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 // iOS Safari keyboard viewport fix
-// Sets --keyboard-offset CSS variable to the bottom offset when keyboard opens
-function updateKeyboardOffset() {
+// When keyboard is open, we need to transform the input bar to stay visible
+function updateKeyboardPosition() {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    // In Safari browser, when keyboard opens the visual viewport shrinks and scrolls up
-    // We need to position the input at the bottom of the visual viewport
-    // The offset is where the bottom of the visual viewport sits relative to the page
+    const inputBar = document.querySelector('[data-input-bar]') as HTMLElement;
+    if (!inputBar) return;
+
+    // Calculate the offset needed to position the input at the bottom of the visual viewport
     const bottomOfVisualViewport = vv.offsetTop + vv.height;
     const bottomOfLayoutViewport = document.documentElement.clientHeight;
-    const offset = bottomOfLayoutViewport - bottomOfVisualViewport;
+    const keyboardOffset = bottomOfLayoutViewport - bottomOfVisualViewport;
 
-    document.documentElement.style.setProperty('--keyboard-offset', `${Math.max(0, offset)}px`);
+    if (keyboardOffset > 50) {
+        // Keyboard is likely open - transform the input up
+        inputBar.style.transform = `translateY(-${keyboardOffset}px)`;
+    } else {
+        // Keyboard closed - reset transform
+        inputBar.style.transform = '';
+    }
 }
 
-updateKeyboardOffset();
-window.visualViewport?.addEventListener('resize', updateKeyboardOffset);
-window.visualViewport?.addEventListener('scroll', updateKeyboardOffset);
+updateKeyboardPosition();
+window.visualViewport?.addEventListener('resize', updateKeyboardPosition);
+window.visualViewport?.addEventListener('scroll', updateKeyboardPosition);
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

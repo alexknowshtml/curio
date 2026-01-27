@@ -212,7 +212,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                 </div>
 
                 {/* Input area */}
-                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3 pb-safe">
+                <div data-input-bar className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3 pb-safe">
                     <div className="max-w-3xl mx-auto">
                         <EntryInput />
                     </div>
