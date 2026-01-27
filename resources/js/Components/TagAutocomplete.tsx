@@ -20,35 +20,100 @@ const sigilColors: Record<string, string> = {
     '@': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
 };
 
+const CACHE_KEY = 'curio_tags_cache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface CachedTags {
+    tags: Tag[];
+    timestamp: number;
+}
+
+// Get cached tags from localStorage
+function getCachedTags(): Tag[] {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return [];
+
+        const { tags, timestamp }: CachedTags = JSON.parse(cached);
+
+        // Return cached tags (we'll refresh in background if stale)
+        return tags;
+    } catch {
+        return [];
+    }
+}
+
+// Save tags to localStorage
+function setCachedTags(tags: Tag[]) {
+    try {
+        const cache: CachedTags = { tags, timestamp: Date.now() };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    } catch {
+        // localStorage might be full or disabled
+    }
+}
+
+// Check if cache is stale
+function isCacheStale(): boolean {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return true;
+
+        const { timestamp }: CachedTags = JSON.parse(cached);
+        return Date.now() - timestamp > CACHE_TTL;
+    } catch {
+        return true;
+    }
+}
+
+// Refresh cache from server (call this in background)
+export async function refreshTagCache() {
+    try {
+        const response = await axios.get('/api/tags');
+        setCachedTags(response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to refresh tag cache:', error);
+        return getCachedTags();
+    }
+}
+
 export function TagAutocomplete({ sigil, query, position, onSelect, onClose }: TagAutocompleteProps) {
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [allTags, setAllTags] = useState<Tag[]>(() => getCachedTags());
     const [selectedIndex, setSelectedIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Fetch matching tags
+    // Load tags from cache immediately, refresh in background if stale
     useEffect(() => {
-        const fetchTags = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get('/api/tags', {
-                    params: { sigil, q: query }
-                });
-                setTags(response.data);
-                setSelectedIndex(0);
-            } catch (error) {
-                console.error('Failed to fetch tags:', error);
-                setTags([]);
-            }
-            setLoading(false);
-        };
+        const cached = getCachedTags();
+        setAllTags(cached);
 
-        fetchTags();
+        // Always refresh in background to keep cache fresh
+        if (isCacheStale() || cached.length === 0) {
+            refreshTagCache().then(tags => {
+                setAllTags(tags);
+            });
+        }
+    }, []);
+
+    // Filter tags based on sigil and query (instant, no API call)
+    const filteredTags = allTags.filter(tag => {
+        if (tag.sigil !== sigil) return false;
+        if (!query) return true;
+        return tag.name.toLowerCase().includes(query.toLowerCase());
+    });
+
+    // Reset selection when filtered results change
+    useEffect(() => {
+        setSelectedIndex(0);
     }, [sigil, query]);
 
     // Handle keyboard navigation
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        const itemCount = tags.length + 1; // +1 for "Create new" option
+        const showCreateNew = query.length > 0 && !filteredTags.some(t => t.name.toLowerCase() === query.toLowerCase());
+        const itemCount = filteredTags.length + (showCreateNew ? 1 : 0);
+
+        if (itemCount === 0) return;
 
         switch (e.key) {
             case 'ArrowDown':
@@ -62,10 +127,9 @@ export function TagAutocomplete({ sigil, query, position, onSelect, onClose }: T
             case 'Enter':
             case 'Tab':
                 e.preventDefault();
-                if (selectedIndex < tags.length) {
-                    onSelect(tags[selectedIndex]);
-                } else {
-                    // Create new
+                if (selectedIndex < filteredTags.length) {
+                    onSelect(filteredTags[selectedIndex]);
+                } else if (showCreateNew) {
                     onSelect({ sigil, name: query, isNew: true });
                 }
                 break;
@@ -74,7 +138,7 @@ export function TagAutocomplete({ sigil, query, position, onSelect, onClose }: T
                 onClose();
                 break;
         }
-    }, [tags, selectedIndex, sigil, query, onSelect, onClose]);
+    }, [filteredTags, selectedIndex, sigil, query, onSelect, onClose]);
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyDown);
@@ -92,7 +156,7 @@ export function TagAutocomplete({ sigil, query, position, onSelect, onClose }: T
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [onClose]);
 
-    const showCreateNew = query.length > 0 && !tags.some(t => t.name.toLowerCase() === query.toLowerCase());
+    const showCreateNew = query.length > 0 && !filteredTags.some(t => t.name.toLowerCase() === query.toLowerCase());
 
     return (
         <div
@@ -101,45 +165,39 @@ export function TagAutocomplete({ sigil, query, position, onSelect, onClose }: T
                        shadow-lg border border-stone-200 dark:border-stone-700 py-1"
             style={{ bottom: '100%', left: 0, marginBottom: '8px' }}
         >
-            {loading ? (
-                <div className="px-3 py-2 text-sm text-stone-400">Loading...</div>
-            ) : (
-                <>
-                    {tags.map((tag, index) => (
-                        <button
-                            key={tag.id}
-                            onClick={() => onSelect(tag)}
-                            className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                       hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors
-                                       ${index === selectedIndex ? 'bg-stone-100 dark:bg-stone-700' : ''}`}
-                        >
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${sigilColors[tag.sigil]}`}>
-                                {tag.sigil}{tag.name}
-                            </span>
-                        </button>
-                    ))}
+            {filteredTags.map((tag, index) => (
+                <button
+                    key={tag.id}
+                    onClick={() => onSelect(tag)}
+                    className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2
+                               hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors
+                               ${index === selectedIndex ? 'bg-stone-100 dark:bg-stone-700' : ''}`}
+                >
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${sigilColors[tag.sigil]}`}>
+                        {tag.sigil}{tag.name}
+                    </span>
+                </button>
+            ))}
 
-                    {showCreateNew && (
-                        <button
-                            onClick={() => onSelect({ sigil, name: query, isNew: true })}
-                            className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                       hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors
-                                       border-t border-stone-100 dark:border-stone-700
-                                       ${selectedIndex === tags.length ? 'bg-stone-100 dark:bg-stone-700' : ''}`}
-                        >
-                            <span className="text-stone-500 dark:text-stone-400">Create new:</span>
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${sigilColors[sigil]}`}>
-                                {sigil}{query}
-                            </span>
-                        </button>
-                    )}
+            {showCreateNew && (
+                <button
+                    onClick={() => onSelect({ sigil, name: query, isNew: true })}
+                    className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2
+                               hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors
+                               ${filteredTags.length > 0 ? 'border-t border-stone-100 dark:border-stone-700' : ''}
+                               ${selectedIndex === filteredTags.length ? 'bg-stone-100 dark:bg-stone-700' : ''}`}
+                >
+                    <span className="text-stone-500 dark:text-stone-400">Create new:</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${sigilColors[sigil]}`}>
+                        {sigil}{query}
+                    </span>
+                </button>
+            )}
 
-                    {tags.length === 0 && !showCreateNew && (
-                        <div className="px-3 py-2 text-sm text-stone-400">
-                            Type to search or create a tag
-                        </div>
-                    )}
-                </>
+            {filteredTags.length === 0 && !showCreateNew && (
+                <div className="px-3 py-2 text-sm text-stone-400">
+                    Type to search or create a tag
+                </div>
             )}
         </div>
     );

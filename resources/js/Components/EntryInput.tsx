@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, FormEvent, ClipboardEvent, ChangeEvent } from 'react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { TagAutocomplete } from './TagAutocomplete';
+import { TagAutocomplete, refreshTagCache } from './TagAutocomplete';
 
 interface PendingImage {
     id: number;
@@ -201,6 +201,10 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }, {
             preserveScroll: true,
             preserveState: true,
+            onSuccess: () => {
+                // Refresh tag cache in background (new tags may have been created)
+                refreshTagCache();
+            },
             onError: () => {
                 // Restore content on error
                 setContent(submittedContent);
