@@ -11,8 +11,13 @@ function updateKeyboardOffset() {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    // Calculate how much the visual viewport is offset from the layout viewport
-    const offset = window.innerHeight - vv.height - vv.offsetTop;
+    // In Safari browser, when keyboard opens the visual viewport shrinks and scrolls up
+    // We need to position the input at the bottom of the visual viewport
+    // The offset is where the bottom of the visual viewport sits relative to the page
+    const bottomOfVisualViewport = vv.offsetTop + vv.height;
+    const bottomOfLayoutViewport = document.documentElement.clientHeight;
+    const offset = bottomOfLayoutViewport - bottomOfVisualViewport;
+
     document.documentElement.style.setProperty('--keyboard-offset', `${Math.max(0, offset)}px`);
 }
 
