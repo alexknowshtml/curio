@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EntryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -14,9 +15,18 @@ Route::get('/', function () {
     ]);
 });
 
+// Redirect dashboard to stream
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('stream');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Main app routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Stream (main capture view)
+    Route::get('/stream', [EntryController::class, 'index'])->name('stream');
+    Route::post('/entries', [EntryController::class, 'store'])->name('entries.store');
+    Route::delete('/entries/{entry}', [EntryController::class, 'destroy'])->name('entries.destroy');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
