@@ -9,11 +9,18 @@ interface Tag {
     name: string;
 }
 
+interface Image {
+    id: number;
+    url: string;
+    filename: string;
+}
+
 interface Entry {
     id: number;
     content: string;
     created_at: string;
     tags: Tag[];
+    images: Image[];
 }
 
 interface Props {

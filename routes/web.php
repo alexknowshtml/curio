@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EntryController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/stream', [EntryController::class, 'index'])->name('stream');
     Route::post('/entries', [EntryController::class, 'store'])->name('entries.store');
     Route::delete('/entries/{entry}', [EntryController::class, 'destroy'])->name('entries.destroy');
+
+    // Images
+    Route::post('/images', [ImageController::class, 'store'])->name('images.store');
+    Route::post('/images/{image}/attach', [ImageController::class, 'attachToEntry'])->name('images.attach');
+    Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy');
 });
 
 Route::middleware('auth')->group(function () {

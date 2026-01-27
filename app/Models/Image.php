@@ -16,6 +16,8 @@ class Image extends Model
         'size',
     ];
 
+    protected $appends = ['url'];
+
     public function entry(): BelongsTo
     {
         return $this->belongsTo(Entry::class);

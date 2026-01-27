@@ -16,7 +16,7 @@ class EntryController extends Controller
     public function index(Request $request)
     {
         $query = Entry::where('user_id', Auth::id())
-            ->with('tags')
+            ->with(['tags', 'images'])
             ->orderBy('created_at', 'desc');
 
         // Filter by tag if provided
@@ -58,10 +58,21 @@ class EntryController extends Controller
         // Parse and sync tags from content
         $tagParser->syncTagsForEntry($entry);
 
+        // Attach any pending images
+        if ($request->has('image_ids') && is_array($request->image_ids)) {
+            \App\Models\Image::whereIn('id', $request->image_ids)
+                ->whereNull('entry_id')
+                ->update(['entry_id' => $entry->id]);
+
+            if (count($request->image_ids) > 0) {
+                $entry->update(['has_images' => true]);
+            }
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'entry' => $entry->load('tags'),
+                'entry' => $entry->load(['tags', 'images']),
             ]);
         }
 

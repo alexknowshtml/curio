@@ -8,11 +8,18 @@ interface Tag {
     name: string;
 }
 
+interface Image {
+    id: number;
+    url: string;
+    filename: string;
+}
+
 interface Entry {
     id: number;
     content: string;
     created_at: string;
     tags: Tag[];
+    images: Image[];
 }
 
 interface Props {
@@ -44,6 +51,27 @@ export function EntryBubble({ entry, onTagClick }: Props) {
 
     return (
         <div className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            {/* Images */}
+            {entry.images && entry.images.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                    {entry.images.map((image) => (
+                        <a
+                            key={image.id}
+                            href={image.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                        >
+                            <img
+                                src={image.url}
+                                alt={image.filename}
+                                className="rounded-lg max-h-48 object-cover hover:opacity-90 transition-opacity"
+                            />
+                        </a>
+                    ))}
+                </div>
+            )}
+
             {/* Content with markdown rendering */}
             <div className="text-gray-900 dark:text-gray-100 prose prose-sm dark:prose-invert max-w-none
                            prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0
