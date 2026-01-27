@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -47,7 +47,9 @@
             }
         </script>
     </head>
-    <body class="font-sans antialiased h-full overflow-hidden bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100">
-        @inertia
+    <body class="font-sans antialiased overflow-hidden bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100">
+        <div id="app">
+            @inertia
+        </div>
     </body>
 </html>

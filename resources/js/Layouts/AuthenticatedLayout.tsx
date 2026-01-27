@@ -7,7 +7,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
     const [showMenu, setShowMenu] = useState(false);
 
     return (
-        <div className="h-screen flex flex-col bg-stone-50 dark:bg-stone-900 pt-safe">
+        <div className="h-full flex flex-col bg-stone-50 dark:bg-stone-900">
             {/* Minimal header */}
             <header className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-sm">
                 <div className="flex items-center justify-between h-14 px-4 max-w-4xl mx-auto w-full">

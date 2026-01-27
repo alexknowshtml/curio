@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 
 interface Tag {
     id: number;
@@ -50,6 +50,10 @@ function formatDateHeader(dateStr: string): string {
 }
 
 export default function Stream({ entries, allTags, activeTagId, selectedDate, datesWithEntries }: Props) {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Group entries by date and sort oldest first within each day
     const entriesByDate = useMemo(() => {
         const groups: Record<string, Entry[]> = {};
         for (const entry of entries) {
@@ -59,12 +63,26 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
             }
             groups[dateKey].push(entry);
         }
+        // Sort entries within each day by created_at ascending (oldest first)
+        for (const dateKey of Object.keys(groups)) {
+            groups[dateKey].sort((a, b) =>
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+        }
         return groups;
     }, [entries]);
 
+    // Sort dates oldest first so newest day is at the bottom
     const sortedDates = useMemo(() => {
-        return Object.keys(entriesByDate).sort((a, b) => b.localeCompare(a));
+        return Object.keys(entriesByDate).sort((a, b) => a.localeCompare(b));
     }, [entriesByDate]);
+
+    // Scroll to bottom on initial load and when entries change
+    useLayoutEffect(() => {
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: 'instant' });
+        }
+    }, [entries.length]);
 
     const handleTagClick = (tagId: number | null) => {
         const params: Record<string, string> = {};
@@ -161,8 +179,8 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                     </div>
                 </div>
 
-                {/* Entry stream */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
+                {/* Entry stream - oldest at top, newest at bottom */}
+                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
                     <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">
@@ -188,11 +206,14 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                                 </div>
                             ))
                         )}
+                        {/* Scroll anchor at the bottom */}
+                        <div ref={bottomRef} />
                     </div>
                 </div>
 
-                {/* Input area */}
-                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-4 pb-safe">
+                {/* Input area with safe area padding */}
+                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-4"
+                     style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
                     <div className="max-w-3xl mx-auto">
                         <EntryInput />
                     </div>
