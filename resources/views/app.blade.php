@@ -48,8 +48,6 @@
         </script>
     </head>
     <body class="font-sans antialiased overflow-hidden bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100">
-        <div id="app">
-            @inertia
-        </div>
+        @inertia
     </body>
 </html>

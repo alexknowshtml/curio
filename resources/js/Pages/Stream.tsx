@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { useMemo, useRef, useEffect, useLayoutEffect } from 'react';
+import { useMemo, useRef, useLayoutEffect } from 'react';
 
 interface Tag {
     id: number;
@@ -211,9 +211,8 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                     </div>
                 </div>
 
-                {/* Input area with safe area padding */}
-                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-4"
-                     style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+                {/* Input area */}
+                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3 pb-safe">
                     <div className="max-w-3xl mx-auto">
                         <EntryInput />
                     </div>

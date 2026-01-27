@@ -172,23 +172,18 @@ export function EntryInput() {
                 </div>
             )}
 
-            <div className="flex items-end gap-3">
-                <div className="flex-1">
-                    <textarea
-                        ref={textareaRef}
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onPaste={handlePaste}
-                        placeholder="What's on your mind?"
-                        disabled={isSubmitting}
-                        className="input-curio resize-none"
-                        rows={1}
-                    />
-                    <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
-                        Enter to save · Shift+Enter for new line · Paste images
-                    </p>
-                </div>
+            <div className="flex items-center gap-2">
+                <textarea
+                    ref={textareaRef}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    placeholder="What's on your mind?"
+                    disabled={isSubmitting}
+                    className="input-curio resize-none flex-1"
+                    rows={1}
+                />
 
                 {/* Image upload button */}
                 <input
@@ -203,7 +198,7 @@ export function EntryInput() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isSubmitting || isUploading}
-                    className="p-3 text-stone-400 hover:text-stone-600
+                    className="flex-shrink-0 p-2 text-stone-400 hover:text-stone-600
                                dark:text-stone-500 dark:hover:text-stone-300
                                disabled:opacity-50 disabled:cursor-not-allowed
                                transition-colors duration-150"
@@ -217,7 +212,7 @@ export function EntryInput() {
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="btn-primary"
+                    className="flex-shrink-0 btn-primary"
                 >
                     {isSubmitting ? 'Saving...' : 'Save'}
                 </button>
