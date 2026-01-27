@@ -185,11 +185,14 @@ export function EntryInput() {
                     rows={1}
                     autoComplete="off"
                     autoCorrect="off"
-                    autoCapitalize="sentences"
-                    spellCheck="false"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-gramm="false"
+                    data-gramm_editor="false"
+                    data-enable-grammarly="false"
                 />
 
-                {/* Image upload button */}
+                {/* Image upload button - tabIndex -1 to exclude from form navigation */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -197,6 +200,7 @@ export function EntryInput() {
                     multiple
                     onChange={handleFileSelect}
                     className="hidden"
+                    tabIndex={-1}
                 />
                 <button
                     type="button"
