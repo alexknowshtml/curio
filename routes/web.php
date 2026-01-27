@@ -32,6 +32,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/images', [ImageController::class, 'store'])->name('images.store');
     Route::post('/images/{image}/attach', [ImageController::class, 'attachToEntry'])->name('images.attach');
     Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy');
+
+    // Tags API
+    Route::get('/api/tags', [EntryController::class, 'searchTags'])->name('tags.search');
 });
 
 Route::middleware('auth')->group(function () {

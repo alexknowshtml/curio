@@ -10,11 +10,8 @@ class TagParserService
      * Supported sigils and their meanings:
      * # = topic
      * @ = person
-     * $ = product
-     * ! = priority
-     * ~ = project
      */
-    protected array $sigils = ['#', '@', '$', '!', '~'];
+    protected array $sigils = ['#', '@'];
 
     /**
      * Parse content and extract tags.

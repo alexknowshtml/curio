@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, FormEvent, ClipboardEvent, ChangeEvent } from 'react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
+import { TagAutocomplete } from './TagAutocomplete';
 
 interface PendingImage {
     id: number;
@@ -12,13 +13,27 @@ interface EntryInputProps {
     onOptimisticSubmit?: (content: string, images: PendingImage[]) => void;
 }
 
+interface AutocompleteState {
+    active: boolean;
+    sigil: string;
+    query: string;
+    startPos: number;
+}
+
 export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [autocomplete, setAutocomplete] = useState<AutocompleteState>({
+        active: false,
+        sigil: '',
+        query: '',
+        startPos: 0,
+    });
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Auto-expand textarea as content grows
     useEffect(() => {
@@ -33,6 +48,58 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     useEffect(() => {
         textareaRef.current?.focus();
     }, []);
+
+    // Check for tag trigger on content change
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = content.slice(0, cursorPos);
+
+        // Look for @ or # followed by word characters (no space after sigil)
+        const match = textBeforeCursor.match(/([@#])([\w]*)$/);
+
+        if (match) {
+            const [fullMatch, sigil, query] = match;
+            const startPos = cursorPos - fullMatch.length;
+            setAutocomplete({
+                active: true,
+                sigil,
+                query,
+                startPos,
+            });
+        } else {
+            setAutocomplete(prev => ({ ...prev, active: false }));
+        }
+    }, [content]);
+
+    const handleTagSelect = (tag: { sigil: string; name: string }) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        // Replace the trigger text with the full tag
+        const before = content.slice(0, autocomplete.startPos);
+        const after = content.slice(textarea.selectionStart);
+
+        // Use brackets for multi-word tags
+        const tagText = tag.name.includes(' ')
+            ? `${tag.sigil}[${tag.name}]`
+            : `${tag.sigil}${tag.name}`;
+
+        const newContent = before + tagText + ' ' + after;
+        setContent(newContent);
+
+        // Close autocomplete
+        setAutocomplete(prev => ({ ...prev, active: false }));
+
+        // Move cursor after the tag
+        const newCursorPos = before.length + tagText.length + 1;
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    };
 
     const uploadImage = async (file: File): Promise<PendingImage | null> => {
         const formData = new FormData();
@@ -112,6 +179,9 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     const handleSubmit = (e?: FormEvent) => {
         e?.preventDefault();
 
+        // Don't submit if autocomplete is active (might be selecting)
+        if (autocomplete.active) return;
+
         // Allow submit if there's content OR images
         if ((!content.trim() && pendingImages.length === 0) || isSubmitting) return;
 
@@ -140,6 +210,18 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        // If autocomplete is active, let it handle navigation keys
+        if (autocomplete.active) {
+            if (['ArrowDown', 'ArrowUp', 'Tab', 'Escape'].includes(e.key)) {
+                // These are handled by TagAutocomplete
+                return;
+            }
+            if (e.key === 'Enter') {
+                // Enter with autocomplete is handled by TagAutocomplete
+                return;
+            }
+        }
+
         // Submit on Enter (without Shift)
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -181,7 +263,18 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
                 </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div ref={containerRef} className="relative flex items-center gap-2">
+                {/* Tag Autocomplete */}
+                {autocomplete.active && (
+                    <TagAutocomplete
+                        sigil={autocomplete.sigil}
+                        query={autocomplete.query}
+                        position={{ top: 0, left: 0 }}
+                        onSelect={handleTagSelect}
+                        onClose={() => setAutocomplete(prev => ({ ...prev, active: false }))}
+                    />
+                )}
+
                 <textarea
                     ref={textareaRef}
                     value={content}

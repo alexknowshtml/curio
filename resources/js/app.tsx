@@ -19,6 +19,15 @@ function updateKeyboardPosition() {
     const bottomOfLayoutViewport = document.documentElement.clientHeight;
     const keyboardOffset = bottomOfLayoutViewport - bottomOfVisualViewport;
 
+    // Debug: log the values (remove after debugging)
+    console.log('KB Debug:', {
+        vvHeight: vv.height,
+        vvOffsetTop: vv.offsetTop,
+        bottomOfVV: bottomOfVisualViewport,
+        bottomOfLV: bottomOfLayoutViewport,
+        offset: keyboardOffset
+    });
+
     if (keyboardOffset > 50) {
         // Keyboard is likely open - transform the input up
         inputBar.style.transform = `translateY(-${keyboardOffset}px)`;

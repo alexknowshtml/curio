@@ -112,4 +112,29 @@ class EntryController extends Controller
 
         return back();
     }
+
+    /**
+     * Search tags for autocomplete
+     */
+    public function searchTags(Request $request)
+    {
+        $query = $request->input('q', '');
+        $sigil = $request->input('sigil', '');
+
+        $tagsQuery = \App\Models\Tag::whereHas('entries', function ($q) {
+            $q->where('user_id', Auth::id());
+        });
+
+        if ($sigil) {
+            $tagsQuery->where('sigil', $sigil);
+        }
+
+        if ($query) {
+            $tagsQuery->where('name', 'like', '%' . $query . '%');
+        }
+
+        $tags = $tagsQuery->orderBy('name')->limit(10)->get();
+
+        return response()->json($tags);
+    }
 }
