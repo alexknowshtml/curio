@@ -181,6 +181,7 @@ html, body {
 body {
     height: 100vh;
     height: 100dvh;
+    height: calc(var(--vh, 1vh) * 100);
     padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
