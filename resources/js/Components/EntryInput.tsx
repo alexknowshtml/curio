@@ -183,6 +183,10 @@ export function EntryInput() {
                     disabled={isSubmitting}
                     className="input-curio resize-none flex-1"
                     rows={1}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="sentences"
+                    spellCheck="false"
                 />
 
                 {/* Image upload button */}
