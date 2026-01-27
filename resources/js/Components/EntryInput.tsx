@@ -3,14 +3,18 @@ import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { TagAutocomplete, refreshTagCache } from './TagAutocomplete';
 
-interface PendingImage {
+interface PendingAttachment {
     id: number;
+    type: 'image' | 'document' | 'text' | 'other';
     url: string;
     filename: string;
+    mime_type: string;
+    size: number;
+    human_size: string;
 }
 
 interface EntryInputProps {
-    onOptimisticSubmit?: (content: string, images: PendingImage[]) => void;
+    onOptimisticSubmit?: (content: string, attachments: PendingAttachment[]) => void;
 }
 
 interface AutocompleteState {
@@ -20,10 +24,25 @@ interface AutocompleteState {
     startPos: number;
 }
 
+// File extensions we accept
+const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.txt,.md,.markdown,.csv,.json,.html,.htm,.css,.js,.ts,.py,.sh,.bash';
+
+// Get file icon based on type
+function getFileIcon(type: string, mimeType: string): string {
+    if (type === 'image') return '🖼️';
+    if (type === 'document') return '📄';
+    if (mimeType.includes('json')) return '{}';
+    if (mimeType.includes('markdown') || mimeType.includes('text/plain')) return '📝';
+    if (mimeType.includes('javascript') || mimeType.includes('typescript')) return '📜';
+    if (mimeType.includes('python')) return '🐍';
+    if (mimeType.includes('html') || mimeType.includes('css')) return '🌐';
+    return '📎';
+}
+
 export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
+    const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [autocomplete, setAutocomplete] = useState<AutocompleteState>({
         active: false,
@@ -101,17 +120,17 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }, 0);
     };
 
-    const uploadImage = async (file: File): Promise<PendingImage | null> => {
+    const uploadFile = async (file: File): Promise<PendingAttachment | null> => {
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file);
 
         try {
-            const response = await axios.post('/images', formData, {
+            const response = await axios.post('/attachments', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            return response.data.image;
+            return response.data.attachment;
         } catch (error) {
-            console.error('Failed to upload image:', error);
+            console.error('Failed to upload file:', error);
             return null;
         }
     };
@@ -133,12 +152,12 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
             e.preventDefault();
             setIsUploading(true);
 
-            const uploadedImages = await Promise.all(
-                imageFiles.map((file) => uploadImage(file))
+            const uploaded = await Promise.all(
+                imageFiles.map((file) => uploadFile(file))
             );
 
-            const validImages = uploadedImages.filter((img): img is PendingImage => img !== null);
-            setPendingImages((prev) => [...prev, ...validImages]);
+            const valid = uploaded.filter((a): a is PendingAttachment => a !== null);
+            setPendingAttachments((prev) => [...prev, ...valid]);
             setIsUploading(false);
         }
     };
@@ -149,16 +168,14 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
 
         setIsUploading(true);
 
-        const uploadPromises: Promise<PendingImage | null>[] = [];
+        const uploadPromises: Promise<PendingAttachment | null>[] = [];
         for (const file of files) {
-            if (file.type.startsWith('image/')) {
-                uploadPromises.push(uploadImage(file));
-            }
+            uploadPromises.push(uploadFile(file));
         }
 
-        const uploadedImages = await Promise.all(uploadPromises);
-        const validImages = uploadedImages.filter((img): img is PendingImage => img !== null);
-        setPendingImages((prev) => [...prev, ...validImages]);
+        const uploaded = await Promise.all(uploadPromises);
+        const valid = uploaded.filter((a): a is PendingAttachment => a !== null);
+        setPendingAttachments((prev) => [...prev, ...valid]);
         setIsUploading(false);
 
         // Reset file input
@@ -167,12 +184,12 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }
     };
 
-    const removeImage = async (imageId: number) => {
+    const removeAttachment = async (attachmentId: number) => {
         try {
-            await axios.delete(`/images/${imageId}`);
-            setPendingImages((prev) => prev.filter((img) => img.id !== imageId));
+            await axios.delete(`/attachments/${attachmentId}`);
+            setPendingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
         } catch (error) {
-            console.error('Failed to delete image:', error);
+            console.error('Failed to delete attachment:', error);
         }
     };
 
@@ -182,22 +199,22 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         // Don't submit if autocomplete is active (might be selecting)
         if (autocomplete.active) return;
 
-        // Allow submit if there's content OR images
-        if ((!content.trim() && pendingImages.length === 0) || isSubmitting) return;
+        // Allow submit if there's content OR attachments
+        if ((!content.trim() && pendingAttachments.length === 0) || isSubmitting) return;
 
-        const submittedContent = content || '(image)';
-        const submittedImages = [...pendingImages];
+        const submittedContent = content || '(attachment)';
+        const submittedAttachments = [...pendingAttachments];
 
         // Optimistic update - immediately show the entry and clear input
-        onOptimisticSubmit?.(submittedContent, submittedImages);
+        onOptimisticSubmit?.(submittedContent, submittedAttachments);
         setContent('');
-        setPendingImages([]);
+        setPendingAttachments([]);
         textareaRef.current?.focus();
 
         // Send to server in background
         router.post('/entries', {
             content: submittedContent,
-            image_ids: submittedImages.map((img) => img.id),
+            attachment_ids: submittedAttachments.map((a) => a.id),
         }, {
             preserveScroll: true,
             preserveState: true,
@@ -208,7 +225,7 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
             onError: () => {
                 // Restore content on error
                 setContent(submittedContent);
-                setPendingImages(submittedImages);
+                setPendingAttachments(submittedAttachments);
             },
         });
     };
@@ -233,23 +250,35 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }
     };
 
-    const canSubmit = (content.trim() || pendingImages.length > 0) && !isSubmitting && !isUploading;
+    const canSubmit = (content.trim() || pendingAttachments.length > 0) && !isSubmitting && !isUploading;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Pending images preview */}
-            {pendingImages.length > 0 && (
+            {/* Pending attachments preview */}
+            {pendingAttachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                    {pendingImages.map((image) => (
-                        <div key={image.id} className="relative">
-                            <img
-                                src={image.url}
-                                alt={image.filename}
-                                className="h-20 w-20 object-cover rounded-xl border border-stone-200 dark:border-stone-700"
-                            />
+                    {pendingAttachments.map((attachment) => (
+                        <div key={attachment.id} className="relative">
+                            {attachment.type === 'image' ? (
+                                <img
+                                    src={attachment.url}
+                                    alt={attachment.filename}
+                                    className="h-20 w-20 object-cover rounded-xl border border-stone-200 dark:border-stone-700"
+                                />
+                            ) : (
+                                <div className="h-20 w-20 rounded-xl border border-stone-200 dark:border-stone-700
+                                               bg-stone-50 dark:bg-stone-800 flex flex-col items-center justify-center p-2">
+                                    <span className="text-2xl mb-1">{getFileIcon(attachment.type, attachment.mime_type)}</span>
+                                    <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate w-full text-center">
+                                        {attachment.filename.length > 12
+                                            ? attachment.filename.slice(0, 10) + '...'
+                                            : attachment.filename}
+                                    </span>
+                                </div>
+                            )}
                             <button
                                 type="button"
-                                onClick={() => removeImage(image.id)}
+                                onClick={() => removeAttachment(attachment.id)}
                                 className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5
                                            flex items-center justify-center text-xs font-bold
                                            hover:bg-rose-600 transition-colors"
@@ -298,11 +327,11 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
                     data-enable-grammarly="false"
                 />
 
-                {/* Image upload button - tabIndex -1 to exclude from form navigation */}
+                {/* File upload button - tabIndex -1 to exclude from form navigation */}
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept={ACCEPTED_EXTENSIONS}
                     multiple
                     onChange={handleFileSelect}
                     className="hidden"
@@ -316,10 +345,10 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
                                dark:text-stone-500 dark:hover:text-stone-300
                                disabled:opacity-50 disabled:cursor-not-allowed
                                transition-colors duration-150"
-                    title="Upload image"
+                    title="Upload file (images, PDFs, text)"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
                 </button>
 
@@ -334,3 +363,6 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         </form>
     );
 }
+
+// Re-export for backwards compatibility
+export type { PendingAttachment as PendingImage };

@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
+import { TagFilterDropdown } from '@/Components/TagFilterDropdown';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { useMemo, useRef, useLayoutEffect, useState, useCallback } from 'react';
 
@@ -11,10 +12,15 @@ interface Tag {
     name: string;
 }
 
-interface Image {
+interface Attachment {
     id: number;
+    type: 'image' | 'document' | 'text' | 'other';
     url: string;
     filename: string;
+    original_filename: string;
+    mime_type: string;
+    size: number;
+    human_size: string;
 }
 
 interface Entry {
@@ -22,7 +28,7 @@ interface Entry {
     content: string;
     created_at: string;
     tags: Tag[];
-    images: Image[];
+    attachments: Attachment[];
 }
 
 interface Props {
@@ -33,17 +39,12 @@ interface Props {
     datesWithEntries: string[];
 }
 
-// Warm, muted tag colors that work in both modes
-const sigilColors: Record<string, string> = {
-    '#': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',      // topic
-    '@': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', // person
-};
-
-function formatDateHeader(dateStr: string): string {
+function formatDateHeader(dateStr: string): { label: string; date: string } {
     const date = parseISO(dateStr);
-    if (isToday(date)) return 'Today';
-    if (isYesterday(date)) return 'Yesterday';
-    return format(date, 'EEEE, MMMM d');
+    const dateFormatted = format(date, 'MMMM d');
+    if (isToday(date)) return { label: 'Today', date: dateFormatted };
+    if (isYesterday(date)) return { label: 'Yesterday', date: dateFormatted };
+    return { label: format(date, 'EEEE'), date: dateFormatted };
 }
 
 export default function Stream({ entries, allTags, activeTagId, selectedDate, datesWithEntries }: Props) {
@@ -62,13 +63,13 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     }, [entries, optimisticEntries]);
 
     // Callback for optimistic entry creation
-    const handleOptimisticEntry = useCallback((content: string, images: { id: number; url: string; filename: string }[]) => {
+    const handleOptimisticEntry = useCallback((content: string, attachments: Attachment[]) => {
         const optimisticEntry: Entry = {
             id: -Date.now(), // Negative ID to avoid conflicts
             content,
             created_at: new Date().toISOString(),
             tags: [], // Tags will be populated when server responds
-            images,
+            attachments,
         };
         setOptimisticEntries(prev => [...prev, optimisticEntry]);
 
@@ -138,18 +139,16 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         router.get('/stream', {}, { preserveState: true });
     };
 
-    const hasFilters = activeTagId || selectedDate;
-
     return (
         <AuthenticatedLayout>
             <Head title="Stream" />
 
             <div className="flex flex-col h-full">
                 {/* Filter bar */}
-                <div className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-800/30 px-4 py-3">
-                    <div className="max-w-3xl mx-auto space-y-3">
-                        {/* Date chips */}
-                        <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
+                <div className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-800/30 px-4 py-2.5">
+                    <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+                        {/* Date chips - left side */}
+                        <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin flex-1 min-w-0">
                             <button
                                 onClick={() => handleDateClick(null)}
                                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
@@ -170,53 +169,22 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                                             : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
                                         }`}
                                 >
-                                    {formatDateHeader(date)}
+                                    {formatDateHeader(date).label}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Tag chips */}
-                        {allTags && allTags.length > 0 && (
-                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
-                                <button
-                                    onClick={() => handleTagClick(null)}
-                                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                                        ${!activeTagId
-                                            ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900'
-                                            : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
-                                        }`}
-                                >
-                                    All tags
-                                </button>
-                                {allTags.map((tag) => (
-                                    <button
-                                        key={tag.id}
-                                        onClick={() => handleTagClick(tag.id)}
-                                        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                                            ${activeTagId && parseInt(activeTagId) === tag.id
-                                                ? 'ring-2 ring-stone-400 dark:ring-stone-500 ' + sigilColors[tag.sigil]
-                                                : sigilColors[tag.sigil]
-                                            }`}
-                                    >
-                                        {tag.sigil}{tag.name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {hasFilters && (
-                            <button
-                                onClick={clearFilters}
-                                className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
-                            >
-                                Clear filters
-                            </button>
-                        )}
+                        {/* Tag dropdown - right side */}
+                        <TagFilterDropdown
+                            allTags={allTags}
+                            activeTagId={activeTagId}
+                            onTagClick={handleTagClick}
+                        />
                     </div>
                 </div>
 
                 {/* Entry stream - oldest at top, newest at bottom */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-6">
                     <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">
@@ -231,16 +199,23 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                         ) : (
                             sortedDates.map((dateKey) => (
                                 <div key={dateKey} className="mb-8 relative">
-                                    <div className="sticky top-0 z-10 flex justify-end py-2 pointer-events-none">
-                                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
-                                                       bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300
-                                                       shadow-sm pointer-events-auto">
-                                            {formatDateHeader(dateKey)}
-                                        </span>
+                                    <div className="sticky top-0 z-10 -mx-4 px-4 py-2
+                                                   bg-stone-100/95 dark:bg-stone-900/95 backdrop-blur-sm
+                                                   border-b border-stone-200/50 dark:border-stone-700/50">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-sm font-bold text-stone-700 dark:text-stone-200">
+                                                {formatDateHeader(dateKey).label}
+                                            </span>
+                                            <span className="text-xs text-stone-400 dark:text-stone-500">
+                                                {formatDateHeader(dateKey).date}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-3 -mt-6">
+                                    <div className="divide-y divide-stone-200/60 dark:divide-stone-700/50">
                                         {entriesByDate[dateKey].map((entry) => (
-                                            <EntryBubble key={entry.id} entry={entry} onTagClick={handleTagClick} />
+                                            <div key={entry.id} className="py-4 first:pt-5">
+                                                <EntryBubble entry={entry} onTagClick={handleTagClick} />
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

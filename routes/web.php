@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EntryController;
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -28,10 +29,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/entries', [EntryController::class, 'store'])->name('entries.store');
     Route::delete('/entries/{entry}', [EntryController::class, 'destroy'])->name('entries.destroy');
 
-    // Images
-    Route::post('/images', [ImageController::class, 'store'])->name('images.store');
-    Route::post('/images/{image}/attach', [ImageController::class, 'attachToEntry'])->name('images.attach');
-    Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy');
+    // Attachments (files, images, documents)
+    Route::post('/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
+    Route::post('/attachments/{attachment}/attach', [AttachmentController::class, 'attachToEntry'])->name('attachments.attach');
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+    Route::get('/attachments/{attachment}/content', [AttachmentController::class, 'content'])->name('attachments.content');
+
+    // Legacy image routes (backwards compatible)
+    Route::post('/images', [AttachmentController::class, 'storeImage'])->name('images.store');
+    Route::delete('/images/{attachment}', [AttachmentController::class, 'destroy'])->name('images.destroy');
 
     // Tags API
     Route::get('/api/tags', [EntryController::class, 'searchTags'])->name('tags.search');
