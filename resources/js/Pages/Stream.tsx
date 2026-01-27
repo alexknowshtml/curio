@@ -230,11 +230,15 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                             </div>
                         ) : (
                             sortedDates.map((dateKey) => (
-                                <div key={dateKey} className="mb-8">
-                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500 mb-4 sticky top-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm py-2 -mx-2 px-2">
-                                        {formatDateHeader(dateKey)}
-                                    </h3>
-                                    <div className="space-y-3">
+                                <div key={dateKey} className="mb-8 relative">
+                                    <div className="sticky top-0 z-10 flex justify-end py-2 pointer-events-none">
+                                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
+                                                       bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300
+                                                       shadow-sm pointer-events-auto">
+                                            {formatDateHeader(dateKey)}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-3 -mt-6">
                                         {entriesByDate[dateKey].map((entry) => (
                                             <EntryBubble key={entry.id} entry={entry} onTagClick={handleTagClick} />
                                         ))}
