@@ -33,13 +33,13 @@ interface Props {
     datesWithEntries: string[];
 }
 
-// Color classes for each sigil type (matching EntryBubble)
+// Warm, muted tag colors that work in both modes
 const sigilColors: Record<string, string> = {
-    '#': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    '@': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    '$': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    '!': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    '~': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+    '#': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+    '@': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    '$': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+    '!': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+    '~': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
 };
 
 function formatDateHeader(dateStr: string): string {
@@ -50,7 +50,6 @@ function formatDateHeader(dateStr: string): string {
 }
 
 export default function Stream({ entries, allTags, activeTagId, selectedDate, datesWithEntries }: Props) {
-    // Group entries by date
     const entriesByDate = useMemo(() => {
         const groups: Record<string, Entry[]> = {};
         for (const entry of entries) {
@@ -88,119 +87,100 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     const hasFilters = activeTagId || selectedDate;
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                    Stream
-                </h2>
-            }
-        >
+        <AuthenticatedLayout>
             <Head title="Stream" />
 
-            <div className="flex flex-col h-[calc(100vh-8rem)] pt-[env(safe-area-inset-top)]">
-                {/* Filter bar: tags and date picker */}
-                <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-4 py-3">
-                    <div className="mx-auto max-w-3xl">
-                        {/* Date picker row */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Date:</label>
-                            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col h-full">
+                {/* Filter bar */}
+                <div className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-800/30 px-4 py-3">
+                    <div className="max-w-3xl mx-auto space-y-3">
+                        {/* Date chips */}
+                        <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
+                            <button
+                                onClick={() => handleDateClick(null)}
+                                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                    ${!selectedDate
+                                        ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900'
+                                        : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
+                                    }`}
+                            >
+                                All
+                            </button>
+                            {datesWithEntries.slice(0, 7).map((date) => (
                                 <button
-                                    onClick={() => handleDateClick(null)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-                                               ${!selectedDate
-                                                   ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                                                   : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                               }`}
+                                    key={date}
+                                    onClick={() => handleDateClick(date)}
+                                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                        ${selectedDate === date
+                                            ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900'
+                                            : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
+                                        }`}
                                 >
-                                    All time
+                                    {formatDateHeader(date)}
                                 </button>
-                                {datesWithEntries.slice(0, 7).map((date) => (
-                                    <button
-                                        key={date}
-                                        onClick={() => handleDateClick(date)}
-                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-                                                   ${selectedDate === date
-                                                       ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                                                       : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                                   }`}
-                                    >
-                                        {formatDateHeader(date)}
-                                    </button>
-                                ))}
-                                {datesWithEntries.length > 7 && (
-                                    <input
-                                        type="date"
-                                        value={selectedDate || ''}
-                                        onChange={(e) => handleDateClick(e.target.value || null)}
-                                        className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600
-                                                   bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                                    />
-                                )}
-                            </div>
+                            ))}
                         </div>
 
-                        {/* Tag filter row */}
+                        {/* Tag chips */}
                         {allTags && allTags.length > 0 && (
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Tags:</label>
-                                <div className="flex flex-wrap gap-2">
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-1">
+                                <button
+                                    onClick={() => handleTagClick(null)}
+                                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                        ${!activeTagId
+                                            ? 'bg-stone-800 text-white dark:bg-stone-100 dark:text-stone-900'
+                                            : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
+                                        }`}
+                                >
+                                    All tags
+                                </button>
+                                {allTags.map((tag) => (
                                     <button
-                                        onClick={() => handleTagClick(null)}
-                                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-                                                   ${!activeTagId
-                                                       ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800'
-                                                       : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                                   }`}
+                                        key={tag.id}
+                                        onClick={() => handleTagClick(tag.id)}
+                                        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                            ${activeTagId && parseInt(activeTagId) === tag.id
+                                                ? 'ring-2 ring-stone-400 dark:ring-stone-500 ' + sigilColors[tag.sigil]
+                                                : sigilColors[tag.sigil]
+                                            }`}
                                     >
-                                        All
+                                        {tag.sigil}{tag.name}
                                     </button>
-                                    {allTags.map((tag) => (
-                                        <button
-                                            key={tag.id}
-                                            onClick={() => handleTagClick(tag.id)}
-                                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-                                                       ${activeTagId && parseInt(activeTagId) === tag.id
-                                                           ? 'ring-2 ring-offset-1 ring-gray-800 dark:ring-white ' + sigilColors[tag.sigil]
-                                                           : sigilColors[tag.sigil] + ' hover:opacity-80'
-                                                       }`}
-                                        >
-                                            {tag.sigil}{tag.name}
-                                        </button>
-                                    ))}
-                                </div>
+                                ))}
                             </div>
                         )}
 
-                        {/* Clear filters button */}
                         {hasFilters && (
-                            <div className="mt-2">
-                                <button
-                                    onClick={clearFilters}
-                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                >
-                                    Clear all filters
-                                </button>
-                            </div>
+                            <button
+                                onClick={clearFilters}
+                                className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                            >
+                                Clear filters
+                            </button>
                         )}
                     </div>
                 </div>
 
-                {/* Entry stream - scrollable, grouped by date */}
-                <div className="flex-1 overflow-y-auto px-4 py-6 pb-[env(safe-area-inset-bottom)]">
-                    <div className="mx-auto max-w-3xl">
+                {/* Entry stream */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-6">
+                    <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                                <p className="text-lg">No entries yet.</p>
-                                <p className="text-sm mt-2">Start capturing your thoughts below.</p>
+                            <div className="text-center py-16">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 mb-4">
+                                    <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                </div>
+                                <p className="text-lg font-medium text-stone-600 dark:text-stone-400">Your cabinet is empty</p>
+                                <p className="text-sm text-stone-500 dark:text-stone-500 mt-1">Start collecting your curiosities below</p>
                             </div>
                         ) : (
                             sortedDates.map((dateKey) => (
                                 <div key={dateKey} className="mb-8">
-                                    <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 sticky top-0 bg-gray-100 dark:bg-gray-900 py-2 px-2 -mx-2 rounded">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500 mb-4 sticky top-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm py-2 -mx-2 px-2">
                                         {formatDateHeader(dateKey)}
                                     </h3>
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         {entriesByDate[dateKey].map((entry) => (
                                             <EntryBubble key={entry.id} entry={entry} onTagClick={handleTagClick} />
                                         ))}
@@ -211,9 +191,9 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                     </div>
                 </div>
 
-                {/* Entry input - fixed at bottom */}
-                <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pb-[env(safe-area-inset-bottom)]">
-                    <div className="mx-auto max-w-3xl px-4 py-4">
+                {/* Input area */}
+                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-4 pb-safe">
+                    <div className="max-w-3xl mx-auto">
                         <EntryInput />
                     </div>
                 </div>

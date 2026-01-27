@@ -150,23 +150,23 @@ export function EntryInput() {
                             <img
                                 src={image.url}
                                 alt={image.filename}
-                                className="h-20 w-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                                className="h-20 w-20 object-cover rounded-xl border border-stone-200 dark:border-stone-700"
                             />
                             <button
                                 type="button"
                                 onClick={() => removeImage(image.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5
+                                className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5
                                            flex items-center justify-center text-xs font-bold
-                                           hover:bg-red-600 transition-colors"
+                                           hover:bg-rose-600 transition-colors"
                             >
                                 &times;
                             </button>
                         </div>
                     ))}
                     {isUploading && (
-                        <div className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600
+                        <div className="h-20 w-20 rounded-xl border-2 border-dashed border-stone-300 dark:border-stone-600
                                        flex items-center justify-center">
-                            <span className="text-xs text-gray-400">Uploading...</span>
+                            <span className="text-xs text-stone-400 dark:text-stone-500">Uploading...</span>
                         </div>
                     )}
                 </div>
@@ -182,17 +182,11 @@ export function EntryInput() {
                         onPaste={handlePaste}
                         placeholder="What's on your mind?"
                         disabled={isSubmitting}
-                        className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600
-                                   bg-white dark:bg-gray-900 px-4 py-3
-                                   text-gray-900 dark:text-gray-100
-                                   placeholder-gray-400 dark:placeholder-gray-500
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                   disabled:opacity-50 disabled:cursor-not-allowed
-                                   transition-all duration-150"
+                        className="input-curio resize-none"
                         rows={1}
                     />
-                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                        Press Enter to save, Shift+Enter for new line. Paste images directly.
+                    <p className="mt-1.5 text-xs text-stone-400 dark:text-stone-500">
+                        Enter to save · Shift+Enter for new line · Paste images
                     </p>
                 </div>
 
@@ -209,26 +203,21 @@ export function EntryInput() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isSubmitting || isUploading}
-                    className="px-3 py-3 text-gray-500 hover:text-gray-700
-                               dark:text-gray-400 dark:hover:text-gray-200
+                    className="p-3 text-stone-400 hover:text-stone-600
+                               dark:text-stone-500 dark:hover:text-stone-300
                                disabled:opacity-50 disabled:cursor-not-allowed
                                transition-colors duration-150"
                     title="Upload image"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </button>
 
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="px-5 py-3 bg-blue-600 hover:bg-blue-700
-                               text-white font-medium rounded-lg
-                               disabled:opacity-50 disabled:cursor-not-allowed
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                               dark:focus:ring-offset-gray-800
-                               transition-colors duration-150"
+                    className="btn-primary"
                 >
                     {isSubmitting ? 'Saving...' : 'Save'}
                 </button>

@@ -1,3 +1,178 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        /* Typography */
+        --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+        --font-serif: 'Source Serif 4', Georgia, serif;
+
+        /* Warm paper palette - light mode */
+        --color-paper: #FAF7F5;
+        --color-paper-subtle: #F5F1EE;
+        --color-ink: #1C1917;
+        --color-ink-muted: #78716C;
+        --color-ink-subtle: #A8A29E;
+
+        /* Accent - warm amber */
+        --color-accent: #B45309;
+        --color-accent-subtle: #FEF3C7;
+
+        /* Safe areas for PWA */
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    .dark {
+        --color-paper: #1C1917;
+        --color-paper-subtle: #292524;
+        --color-ink: #FAF7F5;
+        --color-ink-muted: #A8A29E;
+        --color-ink-subtle: #78716C;
+        --color-accent: #F59E0B;
+        --color-accent-subtle: #451A03;
+    }
+
+    html {
+        background-color: var(--color-paper);
+        color: var(--color-ink);
+    }
+
+    /* PWA safe area utilities */
+    .pt-safe { padding-top: var(--safe-top); }
+    .pb-safe { padding-bottom: var(--safe-bottom); }
+    .pl-safe { padding-left: var(--safe-left); }
+    .pr-safe { padding-right: var(--safe-right); }
+    .p-safe {
+        padding-top: var(--safe-top);
+        padding-bottom: var(--safe-bottom);
+        padding-left: var(--safe-left);
+        padding-right: var(--safe-right);
+    }
+
+    /* Full height accounting for safe areas */
+    .h-screen-safe {
+        height: calc(100vh - var(--safe-top) - var(--safe-bottom));
+        height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+    }
+
+    .min-h-screen-safe {
+        min-height: calc(100vh - var(--safe-top) - var(--safe-bottom));
+        min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+    }
+}
+
+@layer components {
+    /* Prose styling for entries */
+    .prose-curio {
+        font-family: var(--font-serif);
+        line-height: 1.65;
+    }
+
+    .prose-curio p {
+        margin: 0.5em 0;
+    }
+
+    .prose-curio a {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .prose-curio code {
+        font-size: 0.9em;
+        background: var(--color-paper-subtle);
+        padding: 0.15em 0.4em;
+        border-radius: 0.25rem;
+    }
+
+    /* Tag pills */
+    .tag-pill {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+        @apply transition-all duration-150;
+    }
+
+    .tag-pill:hover {
+        @apply scale-105;
+    }
+
+    /* Input styling */
+    .input-curio {
+        @apply w-full rounded-xl border-0 bg-stone-100 dark:bg-stone-800;
+        @apply px-4 py-3 text-stone-900 dark:text-stone-100;
+        @apply placeholder:text-stone-400 dark:placeholder:text-stone-500;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber-500/50;
+        @apply transition-shadow duration-150;
+    }
+
+    /* Card styling */
+    .card-curio {
+        @apply rounded-2xl bg-white dark:bg-stone-800/50;
+        @apply border border-stone-200/50 dark:border-stone-700/50;
+        @apply shadow-sm;
+    }
+
+    /* Button styling */
+    .btn-primary {
+        @apply px-4 py-2.5 rounded-xl font-medium;
+        @apply bg-amber-600 hover:bg-amber-700 text-white;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2;
+        @apply dark:focus:ring-offset-stone-900;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply transition-colors duration-150;
+    }
+
+    .btn-ghost {
+        @apply px-3 py-2 rounded-lg font-medium;
+        @apply text-stone-600 dark:text-stone-400;
+        @apply hover:bg-stone-100 dark:hover:bg-stone-800;
+        @apply focus:outline-none focus:ring-2 focus:ring-stone-500/30;
+        @apply transition-colors duration-150;
+    }
+}
+
+/* Scrollbar styling */
+@layer utilities {
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.stone.300') transparent;
+    }
+
+    .dark .scrollbar-thin {
+        scrollbar-color: theme('colors.stone.600') transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: theme('colors.stone.300');
+        border-radius: 3px;
+    }
+
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: theme('colors.stone.600');
+    }
+}
+
+/* Fix cursor for interactive elements */
+a, button, [role="button"], input[type="submit"], input[type="button"], select, label[for] {
+    cursor: pointer;
+}
+
+button:disabled, input:disabled, select:disabled {
+    cursor: not-allowed;
+}
+
+/* Prevent overscroll bounce on iOS */
+html, body {
+    overscroll-behavior: none;
+}

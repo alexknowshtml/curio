@@ -17,7 +17,14 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
-                serif: ['Literata', ...defaultTheme.fontFamily.serif],
+                serif: ['Source Serif 4', ...defaultTheme.fontFamily.serif],
+            },
+            colors: {
+                paper: 'var(--color-paper)',
+                'paper-subtle': 'var(--color-paper-subtle)',
+                ink: 'var(--color-ink)',
+                'ink-muted': 'var(--color-ink-muted)',
+                'ink-subtle': 'var(--color-ink-subtle)',
             },
         },
     },

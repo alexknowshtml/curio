@@ -27,13 +27,13 @@ interface Props {
     onTagClick?: (tagId: number) => void;
 }
 
-// Color classes for each sigil type
+// Muted, warm color classes for each sigil type
 const sigilColors: Record<string, string> = {
-    '#': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',      // topic
-    '@': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',  // person
-    '$': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200', // product
-    '!': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',          // priority
-    '~': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',  // project
+    '#': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',           // topic
+    '@': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', // person
+    '$': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',     // product
+    '!': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',       // priority
+    '~': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',   // project
 };
 
 export function EntryBubble({ entry, onTagClick }: Props) {
@@ -50,7 +50,7 @@ export function EntryBubble({ entry, onTagClick }: Props) {
     };
 
     return (
-        <div className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="group relative">
             {/* Images */}
             {entry.images && entry.images.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -65,7 +65,7 @@ export function EntryBubble({ entry, onTagClick }: Props) {
                             <img
                                 src={image.url}
                                 alt={image.filename}
-                                className="rounded-lg max-h-48 object-cover hover:opacity-90 transition-opacity"
+                                className="rounded-xl max-h-48 object-cover hover:opacity-90 transition-opacity"
                             />
                         </a>
                     ))}
@@ -73,21 +73,35 @@ export function EntryBubble({ entry, onTagClick }: Props) {
             )}
 
             {/* Content with markdown rendering */}
-            <div className="text-gray-900 dark:text-gray-100 prose prose-sm dark:prose-invert max-w-none
-                           font-serif prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0
-                           prose-a:text-blue-600 dark:prose-a:text-blue-400">
-                <ReactMarkdown>{entry.content}</ReactMarkdown>
+            <div className="prose-curio text-stone-800 dark:text-stone-200 text-base leading-relaxed">
+                <ReactMarkdown
+                    components={{
+                        p: ({ children }) => <p className="my-1">{children}</p>,
+                        a: ({ href, children }) => (
+                            <a href={href} className="text-amber-700 dark:text-amber-400 underline underline-offset-2 hover:text-amber-600 dark:hover:text-amber-300">
+                                {children}
+                            </a>
+                        ),
+                        code: ({ children }) => (
+                            <code className="text-sm bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded">
+                                {children}
+                            </code>
+                        ),
+                    }}
+                >
+                    {entry.content}
+                </ReactMarkdown>
             </div>
 
             {/* Tags */}
             {entry.tags && entry.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                     {entry.tags.map((tag) => (
                         <button
                             key={tag.id}
                             onClick={() => onTagClick?.(tag.id)}
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                       cursor-pointer hover:opacity-80 transition-opacity
+                                       hover:scale-105 transition-transform
                                        ${sigilColors[tag.sigil] || sigilColors['#']}`}
                         >
                             {tag.sigil}{tag.name}
@@ -97,17 +111,17 @@ export function EntryBubble({ entry, onTagClick }: Props) {
             )}
 
             {/* Footer: timestamp and actions */}
-            <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+            <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-stone-400 dark:text-stone-500">
                     {timeStr} · {dateStr}
                 </span>
 
                 {/* Delete button - shows on hover */}
                 <button
                     onClick={handleDelete}
-                    className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700
-                               dark:text-red-400 dark:hover:text-red-300
-                               transition-opacity duration-150"
+                    className="opacity-0 group-hover:opacity-100 text-xs text-stone-400 hover:text-rose-500
+                               dark:text-stone-500 dark:hover:text-rose-400
+                               transition-all duration-150"
                 >
                     Delete
                 </button>

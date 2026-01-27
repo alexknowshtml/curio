@@ -10,18 +10,14 @@ export default function Edit({
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
+        <AuthenticatedLayout>
             <Head title="Profile" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+            <div className="py-8 overflow-auto h-full">
+                <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-6">
+                    <h1 className="text-xl font-semibold text-stone-800 dark:text-stone-100">Profile</h1>
+
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-xl border border-stone-200/50 dark:border-stone-700/50">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
@@ -29,11 +25,11 @@ export default function Edit({
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-xl border border-stone-200/50 dark:border-stone-700/50">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-xl border border-stone-200/50 dark:border-stone-700/50">
                         <DeleteUserForm className="max-w-xl" />
                     </div>
                 </div>

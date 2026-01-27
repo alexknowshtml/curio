@@ -72,8 +72,8 @@ export function ThemeToggle() {
     return (
         <button
             onClick={cycleTheme}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400
-                       hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-stone-500 dark:text-stone-400
+                       hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             title={`Theme: ${labels[theme]}`}
         >
             {icons[theme]}
