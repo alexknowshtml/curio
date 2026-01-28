@@ -102,13 +102,11 @@
     /* Input styling */
     .input-curio {
         @apply w-full rounded-xl border-0 bg-stone-100 dark:bg-stone-800;
-        @apply px-4 text-stone-900 dark:text-stone-100;
+        @apply px-4 py-3 text-stone-900 dark:text-stone-100;
         @apply placeholder:text-stone-400 dark:placeholder:text-stone-500;
         @apply focus:outline-none focus:ring-2 focus:ring-amber-500/50;
         @apply transition-shadow duration-150;
-        @apply leading-relaxed;
-        padding-top: 0.625rem;
-        padding-bottom: 0.625rem;
+        line-height: 1.4;
     }
 
     /* Card styling */

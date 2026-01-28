@@ -39,28 +39,23 @@ interface AutocompleteState {
 // File extensions we accept
 const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.txt,.md,.markdown,.csv,.json,.html,.htm,.css,.js,.ts,.py,.sh,.bash';
 
-// Oblique Strategy-style prompts
+// Oblique Strategy-style prompts (kept short to fit single line on mobile)
 const PLACEHOLDERS = [
-    "What would you do if you weren't afraid?",
-    "What's the simplest version of this?",
     "What are you avoiding?",
-    "What would you tell a friend in this situation?",
     "What's the opposite approach?",
-    "What would make this effortless?",
-    "What are you pretending not to know?",
     "What if this were easy?",
     "What's the real question here?",
-    "What would you do if you knew you couldn't fail?",
     "What's missing?",
-    "What would future you think about this?",
     "What are you overcomplicating?",
-    "What's the smallest useful step?",
-    "What would you do differently if no one were watching?",
-    "What's the most important thing right now?",
+    "What's the smallest step?",
     "What are you not saying?",
     "What would make this fun?",
-    "What's obvious that you're ignoring?",
-    "What would happen if you did nothing?",
+    "What's obvious here?",
+    "What if you did nothing?",
+    "What's the simplest version?",
+    "What would a friend say?",
+    "What's worth remembering?",
+    "What sparked this?",
 ];
 
 // Get file icon based on type
