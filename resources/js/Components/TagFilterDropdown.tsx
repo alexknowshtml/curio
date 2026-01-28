@@ -92,7 +92,7 @@ export function TagFilterDropdown({ allTags, activeTagId, onTagClick }: Props) {
 
             {/* Dropdown panel */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 z-30 w-64
+                <div className="absolute right-0 top-full mt-2 z-50 w-64
                                 bg-white dark:bg-stone-800 rounded-xl shadow-xl
                                 border border-stone-200 dark:border-stone-700
                                 overflow-hidden">
