@@ -4,7 +4,7 @@ import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { TagFilterDropdown } from '@/Components/TagFilterDropdown';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { useMemo, useRef, useLayoutEffect, useState, useCallback } from 'react';
+import { useMemo, useRef, useLayoutEffect, useEffect, useState, useCallback } from 'react';
 
 interface Tag {
     id: number;
@@ -130,9 +130,30 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     // Scroll to bottom on initial load and when entries change
     useLayoutEffect(() => {
         if (bottomRef.current) {
+            // Immediate scroll
             bottomRef.current.scrollIntoView({ behavior: 'instant' });
+            // Also scroll after a brief delay to catch any late-loading content
+            const timeout = setTimeout(() => {
+                bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+            }, 100);
+            return () => clearTimeout(timeout);
         }
-    }, [entries.length]);
+    }, [entries]); // Trigger on entries reference change, not just length
+
+    // Additional scroll on mount to handle any late-rendering content (images, etc.)
+    useEffect(() => {
+        const scrollToBottom = () => {
+            bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+        };
+        // Multiple attempts to catch various loading states
+        scrollToBottom();
+        const t1 = setTimeout(scrollToBottom, 200);
+        const t2 = setTimeout(scrollToBottom, 500);
+        return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+        };
+    }, []); // Only on mount
 
     const handleTagClick = (tagId: number | null) => {
         const params: Record<string, string> = {};
