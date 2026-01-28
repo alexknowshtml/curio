@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3040:80"
+      - "5040:80"
     volumes:
       - .:/var/www/html
       - ./database/database.sqlite:/var/www/html/database/database.sqlite

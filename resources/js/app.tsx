@@ -73,7 +73,7 @@ document.addEventListener('focusout', () => {
     poll();
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = 'Curio';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

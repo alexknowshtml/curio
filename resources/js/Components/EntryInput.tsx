@@ -27,6 +27,10 @@ interface PendingAttachment {
 
 interface EntryInputProps {
     onOptimisticSubmit?: (content: string, attachments: PendingAttachment[]) => void;
+    beforeSubmit?: (content: string, attachments: PendingAttachment[]) => boolean | Promise<boolean>;
+    contentModifier?: string | null; // If set, append this to content on next submit
+    onContentModifierUsed?: () => void; // Called after modifier is applied
+    submitTrigger?: number; // Increment to trigger a submit externally
 }
 
 interface AutocompleteState {
@@ -42,17 +46,17 @@ const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.txt,.md,.mark
 // Oblique Strategy-style prompts (kept short to fit single line on mobile)
 const PLACEHOLDERS = [
     "What are you avoiding?",
-    "What's the opposite approach?",
+    "Try the opposite?",
     "What if this were easy?",
     "What's the real question?",
     "What's missing?",
-    "What are you overcomplicating?",
+    "Overcomplicating this?",
     "What's the smallest step?",
     "What are you not saying?",
     "What would make this fun?",
     "What's obvious here?",
     "What if you did nothing?",
-    "What's the simplest version?",
+    "What's simpler?",
     "What would a friend say?",
     "What's worth remembering?",
     "What sparked this?",
@@ -70,7 +74,7 @@ function getFileIcon(type: string, mimeType: string): string {
     return '📎';
 }
 
-export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
+export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, onContentModifierUsed, submitTrigger }: EntryInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
@@ -118,6 +122,16 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
     useEffect(() => {
         textareaRef.current?.focus();
     }, []);
+
+    // Handle external submit trigger
+    const submitTriggerRef = useRef(submitTrigger);
+    useEffect(() => {
+        if (submitTrigger !== undefined && submitTrigger !== submitTriggerRef.current) {
+            submitTriggerRef.current = submitTrigger;
+            // Call handleSubmit but bypass the beforeSubmit check
+            handleSubmitDirect();
+        }
+    }, [submitTrigger]);
 
     // Check for tag trigger on content change
     useEffect(() => {
@@ -276,7 +290,7 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }
     };
 
-    const handleSubmit = (e?: FormEvent) => {
+    const handleSubmit = async (e?: FormEvent) => {
         e?.preventDefault();
 
         // Don't submit if autocomplete is active (might be selecting)
@@ -295,8 +309,20 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
             return;
         }
 
-        const submittedContent = content.trim();
+        let submittedContent = content.trim();
         const submittedAttachments = [...pendingAttachments];
+
+        // Check if beforeSubmit wants to intercept
+        if (beforeSubmit) {
+            const shouldContinue = await beforeSubmit(submittedContent, submittedAttachments);
+            if (!shouldContinue) return;
+        }
+
+        // Apply any content modifications (e.g., adding a tag)
+        if (contentModifier) {
+            submittedContent = `${submittedContent} ${contentModifier}`;
+            onContentModifierUsed?.();
+        }
 
         // Optimistic update - immediately show the entry and clear input
         onOptimisticSubmit?.(submittedContent, submittedAttachments);
@@ -317,6 +343,43 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
             },
             onError: () => {
                 // Restore content on error
+                setContent(submittedContent);
+                setPendingAttachments(submittedAttachments);
+            },
+        });
+    };
+
+    // Direct submit that bypasses beforeSubmit (used for external triggers after modal confirmation)
+    const handleSubmitDirect = () => {
+        // Allow submit if there's content OR attachments
+        if ((!content.trim() && pendingAttachments.length === 0) || isSubmitting) return;
+
+        let submittedContent = content.trim();
+        const submittedAttachments = [...pendingAttachments];
+
+        // Apply any content modifications (e.g., adding a tag)
+        if (contentModifier) {
+            submittedContent = `${submittedContent} ${contentModifier}`;
+            onContentModifierUsed?.();
+        }
+
+        // Optimistic update - immediately show the entry and clear input
+        onOptimisticSubmit?.(submittedContent, submittedAttachments);
+        setContent('');
+        setPendingAttachments([]);
+        textareaRef.current?.focus();
+
+        // Send to server in background
+        router.post('/entries', {
+            content: submittedContent,
+            attachment_ids: submittedAttachments.map((a) => a.id),
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                refreshTagCache();
+            },
+            onError: () => {
                 setContent(submittedContent);
                 setPendingAttachments(submittedAttachments);
             },

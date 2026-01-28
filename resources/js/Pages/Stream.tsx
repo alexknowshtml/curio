@@ -4,7 +4,7 @@ import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { TagFilterDropdown } from '@/Components/TagFilterDropdown';
 import { DatePicker } from '@/Components/DatePicker';
-import { FilterMismatchModal } from '@/Components/FilterMismatchModal';
+import { FilterMismatchModal, PostedWithoutTagModal } from '@/Components/FilterMismatchModal';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { useMemo, useRef, useLayoutEffect, useEffect, useState, useCallback } from 'react';
 
@@ -56,11 +56,19 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     const allButtonRef = useRef<HTMLButtonElement>(null);
     const [isFiltering, setIsFiltering] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showFilterMismatchModal, setShowFilterMismatchModal] = useState(false);
+    const [showAddTagModal, setShowAddTagModal] = useState(false);
+    const [showPostedWithoutTagModal, setShowPostedWithoutTagModal] = useState(false);
+    const [pendingSubmit, setPendingSubmit] = useState<{ content: string; attachments: any[] } | null>(null);
     const [highlightedId, setHighlightedId] = useState<number | null>(highlightEntryId);
 
     // Track if we have an active filter (tag or date that's not today)
     const hasActiveFilter = !!activeTagId || (!!selectedDate && !isToday(parseISO(selectedDate)));
+
+    // Get the active tag object for display in modals
+    const activeTag = useMemo(() => {
+        if (!activeTagId) return null;
+        return allTags.find(t => t.id === Number(activeTagId)) || null;
+    }, [activeTagId, allTags]);
 
     // Handle highlight from search - scroll to entry and keep highlighted until user clicks
     useEffect(() => {
@@ -128,6 +136,72 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         return [...entries, ...pendingOptimistic];
     }, [entries, optimisticEntries]);
 
+    // Check if content contains the active tag
+    const contentHasActiveTag = useCallback((content: string) => {
+        if (!activeTag) return true;
+        const tagPatterns = [
+            `${activeTag.sigil}${activeTag.name}`,
+            `${activeTag.sigil}[${activeTag.name}]`,
+        ];
+        return tagPatterns.some(pattern => content.toLowerCase().includes(pattern.toLowerCase()));
+    }, [activeTag]);
+
+    // Intercept submit to check for tag mismatch
+    const handleBeforeSubmit = useCallback((content: string, attachments: any[]): Promise<boolean> => {
+        return new Promise((resolve) => {
+            // Only check if we have an active tag filter
+            if (!activeTag) {
+                resolve(true);
+                return;
+            }
+
+            // Check if content already has the tag
+            if (contentHasActiveTag(content)) {
+                resolve(true);
+                return;
+            }
+
+            // Show the "Add tag?" modal
+            setPendingSubmit({ content, attachments });
+            setShowAddTagModal(true);
+            resolve(false); // Don't submit yet - wait for modal response
+        });
+    }, [activeTag, contentHasActiveTag]);
+
+    // Handle "Yes, add tag" from modal
+    const handleAddTag = useCallback(() => {
+        if (!activeTag) return;
+        setShowAddTagModal(false);
+        // Set the content modifier to add the tag
+        const tagText = activeTag.name.includes(' ')
+            ? `${activeTag.sigil}[${activeTag.name}]`
+            : `${activeTag.sigil}${activeTag.name}`;
+        setContentModifier(tagText);
+        // Trigger submit
+        setSubmitTrigger(prev => prev + 1);
+        setPendingSubmit(null);
+    }, [activeTag]);
+
+    // Handle "No, post without" from modal
+    const handlePostWithout = useCallback(() => {
+        setShowAddTagModal(false);
+        setContentModifier(null);
+        // Trigger submit without adding tag
+        setSubmitTrigger(prev => prev + 1);
+        setPendingSubmit(null);
+    }, []);
+
+    // Handle cancel from add tag modal
+    const handleCancelAddTag = useCallback(() => {
+        setShowAddTagModal(false);
+        setPendingSubmit(null);
+    }, []);
+
+    // Clear content modifier after it's been used
+    const handleContentModifierUsed = useCallback(() => {
+        setContentModifier(null);
+    }, []);
+
     // Callback for optimistic entry creation
     const handleOptimisticEntry = useCallback((content: string, attachments: Attachment[]) => {
         const optimisticEntry: Entry = {
@@ -144,27 +218,17 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
             bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 50);
 
-        // If there's an active filter, show the mismatch modal after a delay
-        // (giving time for the server to respond and confirm it's not in the filtered results)
-        if (hasActiveFilter) {
-            setTimeout(() => {
-                // Check if the entry appeared in the server results
-                // If not, show the modal
-                setOptimisticEntries(prev => {
-                    const stillPending = prev.some(e => e.id === optimisticEntry.id);
-                    if (stillPending) {
-                        setShowFilterMismatchModal(true);
-                    }
-                    return prev.filter(e => e.id !== optimisticEntry.id);
-                });
-            }, 1500); // Wait 1.5s for server response
-        } else {
-            // No filter active - just clean up after 5 seconds as safety
-            setTimeout(() => {
-                setOptimisticEntries(prev => prev.filter(e => e.id !== optimisticEntry.id));
-            }, 5000);
+        // If we have an active tag filter and the content doesn't have that tag,
+        // show the "posted without tag" modal
+        if (activeTag && !contentHasActiveTag(content)) {
+            setShowPostedWithoutTagModal(true);
         }
-    }, [hasActiveFilter]);
+
+        // Clean up optimistic entry after 5 seconds
+        setTimeout(() => {
+            setOptimisticEntries(prev => prev.filter(e => e.id !== optimisticEntry.id));
+        }, 5000);
+    }, [activeTag, contentHasActiveTag]);
 
     // Clear optimistic entries when server data updates (entries prop changes)
     useLayoutEffect(() => {
@@ -273,16 +337,20 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         });
     };
 
-    // Handle "View Entry" from filter mismatch modal - clear all filters
+    // Handle "View Entry" from posted without tag modal - clear all filters
     const handleViewEntry = () => {
-        setShowFilterMismatchModal(false);
+        setShowPostedWithoutTagModal(false);
         clearFilters();
     };
 
-    // Handle "Stay Here" from filter mismatch modal - just close modal
+    // Handle "Stay Here" from posted without tag modal - just close modal
     const handleStayHere = () => {
-        setShowFilterMismatchModal(false);
+        setShowPostedWithoutTagModal(false);
     };
+
+    // State for controlling EntryInput submit
+    const [submitTrigger, setSubmitTrigger] = useState(0);
+    const [contentModifier, setContentModifier] = useState<string | null>(null);
 
     return (
         <AuthenticatedLayout>
@@ -406,14 +474,30 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                 {/* Input area */}
                 <div data-input-bar className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-4 py-3 pb-safe">
                     <div className="max-w-3xl mx-auto">
-                        <EntryInput onOptimisticSubmit={handleOptimisticEntry} />
+                        <EntryInput
+                            onOptimisticSubmit={handleOptimisticEntry}
+                            beforeSubmit={handleBeforeSubmit}
+                            contentModifier={contentModifier}
+                            onContentModifierUsed={handleContentModifierUsed}
+                            submitTrigger={submitTrigger}
+                        />
                     </div>
                 </div>
             </div>
 
-            {/* Filter mismatch modal */}
+            {/* Add tag modal - shown before posting */}
             <FilterMismatchModal
-                show={showFilterMismatchModal}
+                show={showAddTagModal}
+                activeTag={activeTag}
+                onAddTag={handleAddTag}
+                onPostWithout={handlePostWithout}
+                onCancel={handleCancelAddTag}
+            />
+
+            {/* Posted without tag modal - shown after posting */}
+            <PostedWithoutTagModal
+                show={showPostedWithoutTagModal}
+                activeTag={activeTag}
                 onViewEntry={handleViewEntry}
                 onStayHere={handleStayHere}
             />

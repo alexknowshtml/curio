@@ -23,16 +23,24 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * Admin user IDs
+     */
+    private const ADMIN_USER_IDS = [1]; // Alex
+
+    /**
      * Define the props that are shared by default.
      *
      * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'isAdmin' => $user && in_array($user->id, self::ADMIN_USER_IDS),
             ],
         ];
     }

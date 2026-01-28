@@ -110,6 +110,7 @@ class AttachmentController extends Controller
                 'type' => $attachment->type,
                 'url' => Storage::url($path),
                 'filename' => $attachment->original_filename,
+                'original_filename' => $attachment->original_filename,
                 'mime_type' => $attachment->mime_type,
                 'size' => $attachment->size,
                 'human_size' => $attachment->human_size,
