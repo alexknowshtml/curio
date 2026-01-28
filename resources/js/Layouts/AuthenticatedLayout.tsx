@@ -57,8 +57,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                             </svg>
                         </button>
 
-                        {showMenu && (
-                            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-stone-800 shadow-lg border border-stone-200/50 dark:border-stone-700/50 py-1 z-[100]">
+                        <div className={`absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-stone-800 shadow-lg border border-stone-200/50 dark:border-stone-700/50 py-1 z-[100] transition-all duration-150 origin-top-right ${showMenu ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                                 <ThemeToggle />
                                 <div className="border-t border-stone-200/50 dark:border-stone-700/50 my-1"></div>
                                 {isAdmin && (
@@ -83,8 +82,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                 >
                                     Sign out
                                 </Link>
-                            </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </header>

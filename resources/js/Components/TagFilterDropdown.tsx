@@ -79,7 +79,7 @@ export function TagFilterDropdown({ allTags, activeTagId, onTagClick }: Props) {
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                     ${hasFilter
-                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                        ? 'bg-stone-300/80 text-stone-700 dark:bg-stone-600/60 dark:text-stone-200'
                         : 'bg-stone-200/70 text-stone-600 dark:bg-stone-700/50 dark:text-stone-300 hover:bg-stone-300/70 dark:hover:bg-stone-600/50'
                     }`}
             >

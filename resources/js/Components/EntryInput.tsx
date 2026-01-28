@@ -99,6 +99,7 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
     const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [draftLoaded, setDraftLoaded] = useState(false);
+    const [draftSaveState, setDraftSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [autocomplete, setAutocomplete] = useState<AutocompleteState>({
         active: false,
         sigil: '',
@@ -136,10 +137,15 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
 
     // Auto-save draft (debounced)
     const saveDraft = useDebouncedCallback(async (text: string) => {
+        setDraftSaveState('saving');
         try {
             await axios.post('/api/draft', { content: text });
+            setDraftSaveState('saved');
+            // Reset to idle after a short delay
+            setTimeout(() => setDraftSaveState('idle'), 2000);
         } catch (error) {
             console.error('Failed to save draft:', error);
+            setDraftSaveState('idle');
         }
     }, 500);
 
@@ -523,24 +529,32 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
                     />
                 )}
 
-                <textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onPaste={handlePaste}
-                    placeholder={PLACEHOLDERS[placeholderIndex]}
-                    disabled={isSubmitting}
-                    className="input-curio resize-none flex-1"
-                    rows={1}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                />
+                <div className="relative flex-1">
+                    <textarea
+                        ref={textareaRef}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onPaste={handlePaste}
+                        placeholder={PLACEHOLDERS[placeholderIndex]}
+                        disabled={isSubmitting}
+                        className="input-curio resize-none w-full"
+                        rows={1}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        data-gramm="false"
+                        data-gramm_editor="false"
+                        data-enable-grammarly="false"
+                    />
+                    {/* Draft save indicator - inside input */}
+                    <div className={`absolute bottom-2 right-2 text-[10px] pointer-events-none transition-opacity duration-300 ${draftSaveState !== 'idle' && content.trim() ? 'opacity-100' : 'opacity-0'}`}>
+                        <span className="text-stone-400 dark:text-stone-500">
+                            {draftSaveState === 'saving' ? 'Saving...' : 'Saved'}
+                        </span>
+                    </div>
+                </div>
 
                 {/* File upload button - tabIndex -1 to exclude from form navigation */}
                 <input
