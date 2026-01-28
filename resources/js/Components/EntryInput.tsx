@@ -39,18 +39,28 @@ interface AutocompleteState {
 // File extensions we accept
 const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.txt,.md,.markdown,.csv,.json,.html,.htm,.css,.js,.ts,.py,.sh,.bash';
 
-// Rotating placeholder prompts
+// Oblique Strategy-style prompts
 const PLACEHOLDERS = [
-    "What's on your mind?",
-    "What are you working on?",
-    "What caught your attention?",
-    "What are you thinking about?",
-    "What are you considering?",
-    "What are you curious about?",
-    "What did you learn today?",
-    "What are you exploring?",
-    "What sparked your interest?",
-    "What's worth remembering?",
+    "What would you do if you weren't afraid?",
+    "What's the simplest version of this?",
+    "What are you avoiding?",
+    "What would you tell a friend in this situation?",
+    "What's the opposite approach?",
+    "What would make this effortless?",
+    "What are you pretending not to know?",
+    "What if this were easy?",
+    "What's the real question here?",
+    "What would you do if you knew you couldn't fail?",
+    "What's missing?",
+    "What would future you think about this?",
+    "What are you overcomplicating?",
+    "What's the smallest useful step?",
+    "What would you do differently if no one were watching?",
+    "What's the most important thing right now?",
+    "What are you not saying?",
+    "What would make this fun?",
+    "What's obvious that you're ignoring?",
+    "What would happen if you did nothing?",
 ];
 
 // Get file icon based on type
