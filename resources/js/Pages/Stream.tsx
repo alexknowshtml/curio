@@ -266,7 +266,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                                     </div>
                                     <div className="divide-y divide-stone-200/60 dark:divide-stone-700/50">
                                         {entriesByDate[dateKey].map((entry) => (
-                                            <div key={entry.id} className="py-4 first:pt-5">
+                                            <div key={entry.id} className="py-3 first:pt-4">
                                                 <EntryBubble entry={entry} onTagClick={handleTagClick} />
                                             </div>
                                         ))}
