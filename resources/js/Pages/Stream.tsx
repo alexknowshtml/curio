@@ -218,7 +218,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                 </div>
 
                 {/* Entry stream - oldest at top, newest at bottom */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-6">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-2">
                     <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">
@@ -231,8 +231,8 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                                 <p className="text-sm text-stone-500 dark:text-stone-500 mt-1">Start collecting your curiosities below</p>
                             </div>
                         ) : (
-                            sortedDates.map((dateKey) => (
-                                <div key={dateKey} className="mb-8 relative">
+                            sortedDates.map((dateKey, idx) => (
+                                <div key={dateKey} className={`relative ${idx < sortedDates.length - 1 ? 'mb-6' : 'mb-2'}`}>
                                     <div className="sticky top-0 z-10 -mx-4 px-4 py-2
                                                    bg-stone-100/95 dark:bg-stone-900/95 backdrop-blur-sm
                                                    border-b border-stone-200/50 dark:border-stone-700/50">
