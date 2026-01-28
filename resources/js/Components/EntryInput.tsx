@@ -74,11 +74,31 @@ function getFileIcon(type: string, mimeType: string): string {
     return '📎';
 }
 
+// Debounce helper
+function useDebouncedCallback<T extends (...args: any[]) => any>(
+    callback: T,
+    delay: number
+): T {
+    const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
+
+    return ((...args: Parameters<T>) => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => callback(...args), delay);
+    }) as T;
+}
+
 export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, onContentModifierUsed, submitTrigger }: EntryInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [draftLoaded, setDraftLoaded] = useState(false);
     const [autocomplete, setAutocomplete] = useState<AutocompleteState>({
         active: false,
         sigil: '',
@@ -96,6 +116,39 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Load draft on mount
+    useEffect(() => {
+        const loadDraft = async () => {
+            try {
+                const response = await axios.get('/api/draft');
+                if (response.data.content) {
+                    setContent(response.data.content);
+                }
+            } catch (error) {
+                console.error('Failed to load draft:', error);
+            } finally {
+                setDraftLoaded(true);
+            }
+        };
+        loadDraft();
+    }, []);
+
+    // Auto-save draft (debounced)
+    const saveDraft = useDebouncedCallback(async (text: string) => {
+        try {
+            await axios.post('/api/draft', { content: text });
+        } catch (error) {
+            console.error('Failed to save draft:', error);
+        }
+    }, 500);
+
+    // Save draft when content changes (but only after initial load)
+    useEffect(() => {
+        if (draftLoaded) {
+            saveDraft(content);
+        }
+    }, [content, draftLoaded]);
 
     // Rotate placeholder every 10 seconds
     useEffect(() => {
@@ -330,16 +383,19 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
         setPendingAttachments([]);
         textareaRef.current?.focus();
 
-        // Send to server in background
+        // Send to server in background (no progress bar - optimistic UI handles feedback)
         router.post('/entries', {
             content: submittedContent,
             attachment_ids: submittedAttachments.map((a) => a.id),
         }, {
             preserveScroll: true,
             preserveState: true,
+            showProgress: false,
             onSuccess: () => {
                 // Refresh tag cache in background (new tags may have been created)
                 refreshTagCache();
+                // Clear draft on server
+                axios.post('/api/draft', { content: '' }).catch(() => {});
             },
             onError: () => {
                 // Restore content on error
@@ -369,15 +425,18 @@ export function EntryInput({ onOptimisticSubmit, beforeSubmit, contentModifier, 
         setPendingAttachments([]);
         textareaRef.current?.focus();
 
-        // Send to server in background
+        // Send to server in background (no progress bar - optimistic UI handles feedback)
         router.post('/entries', {
             content: submittedContent,
             attachment_ids: submittedAttachments.map((a) => a.id),
         }, {
             preserveScroll: true,
             preserveState: true,
+            showProgress: false,
             onSuccess: () => {
                 refreshTagCache();
+                // Clear draft on server
+                axios.post('/api/draft', { content: '' }).catch(() => {});
             },
             onError: () => {
                 setContent(submittedContent);

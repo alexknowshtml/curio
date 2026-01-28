@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Draft;
 use App\Models\Entry;
 use App\Services\TagParserService;
 use Carbon\Carbon;
@@ -182,5 +183,34 @@ class EntryController extends Controller
             ->get();
 
         return response()->json($entries);
+    }
+
+    /**
+     * Get the user's current draft
+     */
+    public function getDraft()
+    {
+        $draft = Draft::where('user_id', Auth::id())->first();
+
+        return response()->json([
+            'content' => $draft?->content ?? '',
+        ]);
+    }
+
+    /**
+     * Save the user's draft (auto-save)
+     */
+    public function saveDraft(Request $request)
+    {
+        $validated = $request->validate([
+            'content' => 'nullable|string|max:10000',
+        ]);
+
+        Draft::updateOrCreate(
+            ['user_id' => Auth::id()],
+            ['content' => $validated['content'] ?? '']
+        );
+
+        return response()->json(['success' => true]);
     }
 }

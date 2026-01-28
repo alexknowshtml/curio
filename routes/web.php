@@ -44,6 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Search API
     Route::get('/api/search', [EntryController::class, 'search'])->name('entries.search');
+
+    // Draft API (auto-save)
+    Route::get('/api/draft', [EntryController::class, 'getDraft'])->name('draft.get');
+    Route::post('/api/draft', [EntryController::class, 'saveDraft'])->name('draft.save');
 });
 
 Route::middleware('auth')->group(function () {
