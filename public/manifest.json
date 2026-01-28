@@ -2,20 +2,20 @@
     "name": "Curio",
     "short_name": "Curio",
     "description": "A cabinet of curiosities for your mind",
-    "start_url": "/stream",
+    "start_url": "/home",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#2563eb",
+    "background_color": "#E7E5E4",
+    "theme_color": "#78350F",
     "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "/icons/icon-192.png",
+            "src": "/icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/icons/icon-512.png",
+            "src": "/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
