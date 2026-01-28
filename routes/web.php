@@ -4,28 +4,28 @@ use App\Http\Controllers\EntryController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Middleware\AdminOnly;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    if (Auth::check()) {
+        return redirect()->route('home');
+    }
+    return redirect()->route('login');
 });
 
-// Redirect dashboard to stream
-Route::get('/dashboard', function () {
-    return redirect()->route('stream');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Redirect legacy routes
+Route::get('/dashboard', fn() => redirect()->route('home'))->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/stream', fn() => redirect()->route('home'))->middleware(['auth', 'verified']);
 
 // Main app routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Stream (main capture view)
-    Route::get('/stream', [EntryController::class, 'index'])->name('stream');
+    // Home (main capture view)
+    Route::get('/home', [EntryController::class, 'index'])->name('home');
     Route::post('/entries', [EntryController::class, 'store'])->name('entries.store');
     Route::delete('/entries/{entry}', [EntryController::class, 'destroy'])->name('entries.destroy');
 
@@ -41,12 +41,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Tags API
     Route::get('/api/tags', [EntryController::class, 'searchTags'])->name('tags.search');
+
+    // Search API
+    Route::get('/api/search', [EntryController::class, 'search'])->name('entries.search');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Admin routes (restricted to admin users only)
+Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function () {
+    Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::post('/users', [AdminUserController::class, 'store'])->name('admin.users.store');
+    Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
 });
 
 require __DIR__.'/auth.php';

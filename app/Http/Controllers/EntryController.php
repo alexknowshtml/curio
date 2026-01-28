@@ -61,6 +61,7 @@ class EntryController extends Controller
             'activeTagId' => $request->input('tag'),
             'selectedDate' => $selectedDate,
             'datesWithEntries' => $datesWithEntries,
+            'highlightEntryId' => $request->has('highlight') ? (int) $request->input('highlight') : null,
         ]);
     }
 
@@ -146,5 +147,40 @@ class EntryController extends Controller
         $tags = $tagsQuery->orderBy('name')->limit(10)->get();
 
         return response()->json($tags);
+    }
+
+    /**
+     * Search entries by content
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+        $recent = $request->boolean('recent', false);
+
+        // If requesting recent entries for cache (no search query)
+        if ($recent && strlen($query) < 2) {
+            $sevenDaysAgo = Carbon::now()->subDays(7);
+            $entries = Entry::where('user_id', Auth::id())
+                ->where('created_at', '>=', $sevenDaysAgo)
+                ->with(['tags', 'attachments'])
+                ->orderBy('created_at', 'desc')
+                ->limit(100)
+                ->get();
+
+            return response()->json($entries);
+        }
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $entries = Entry::where('user_id', Auth::id())
+            ->where('content', 'like', '%' . $query . '%')
+            ->with(['tags', 'attachments'])
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return response()->json($entries);
     }
 }
