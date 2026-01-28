@@ -56,9 +56,18 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
 
     // Combine server entries with optimistic ones
     const allEntries = useMemo(() => {
-        // Filter out any optimistic entries that now exist in server data (by matching content + approximate time)
-        const serverIds = new Set(entries.map(e => e.id));
-        const pendingOptimistic = optimisticEntries.filter(opt => !serverIds.has(opt.id));
+        // Filter out optimistic entries that likely now exist in server data
+        // Match by content similarity since optimistic IDs are negative
+        const pendingOptimistic = optimisticEntries.filter(opt => {
+            // Check if any server entry has matching content (added within last 30 seconds)
+            const optTime = new Date(opt.created_at).getTime();
+            return !entries.some(e => {
+                const serverTime = new Date(e.created_at).getTime();
+                const timeDiff = Math.abs(serverTime - optTime);
+                // Match if content is same and within 30 seconds
+                return e.content === opt.content && timeDiff < 30000;
+            });
+        });
         return [...entries, ...pendingOptimistic];
     }, [entries, optimisticEntries]);
 
@@ -81,12 +90,16 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
 
     // Clear optimistic entries when server data updates (entries prop changes)
     useLayoutEffect(() => {
-        if (optimisticEntries.length > 0) {
-            // Give a small delay to let the real entry render, then clear optimistic
-            const timeout = setTimeout(() => {
-                setOptimisticEntries([]);
-            }, 100);
-            return () => clearTimeout(timeout);
+        if (optimisticEntries.length > 0 && entries.length > 0) {
+            // Clear any optimistic entries that have been confirmed by server
+            // This happens immediately now since deduplication handles the visual
+            setOptimisticEntries(prev => prev.filter(opt => {
+                const optTime = new Date(opt.created_at).getTime();
+                return !entries.some(e => {
+                    const serverTime = new Date(e.created_at).getTime();
+                    return e.content === opt.content && Math.abs(serverTime - optTime) < 30000;
+                });
+            }));
         }
     }, [entries]);
 
@@ -125,23 +138,23 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         const params: Record<string, string> = {};
         if (tagId !== null) params.tag = String(tagId);
         if (selectedDate) params.date = selectedDate;
-        router.get('/stream', params, { preserveState: true });
+        router.get('/home', params, { preserveState: true });
     };
 
     const handleDateClick = (date: string | null) => {
         const params: Record<string, string> = {};
         if (activeTagId) params.tag = activeTagId;
         if (date !== null) params.date = date;
-        router.get('/stream', params, { preserveState: true });
+        router.get('/home', params, { preserveState: true });
     };
 
     const clearFilters = () => {
-        router.get('/stream', {}, { preserveState: true });
+        router.get('/home', {}, { preserveState: true });
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Stream" />
+            <Head title="Home" />
 
             <div className="flex flex-col h-full">
                 {/* Filter bar */}
@@ -202,7 +215,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                                     <div className="sticky top-0 z-10 -mx-4 px-4 py-2
                                                    bg-stone-100/95 dark:bg-stone-900/95 backdrop-blur-sm
                                                    border-b border-stone-200/50 dark:border-stone-700/50">
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-baseline justify-end gap-2">
                                             <span className="text-sm font-bold text-stone-700 dark:text-stone-200">
                                                 {formatDateHeader(dateKey).label}
                                             </span>
