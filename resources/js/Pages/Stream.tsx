@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { EntryInput } from '@/Components/EntryInput';
 import { EntryBubble } from '@/Components/EntryBubble';
 import { TagFilterDropdown } from '@/Components/TagFilterDropdown';
@@ -50,6 +50,7 @@ function formatDateHeader(dateStr: string): { label: string; date: string } {
 export default function Stream({ entries, allTags, activeTagId, selectedDate, datesWithEntries }: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const [isFiltering, setIsFiltering] = useState(false);
 
     // Optimistic entries that haven't been confirmed by server yet
     const [optimisticEntries, setOptimisticEntries] = useState<Entry[]>([]);
@@ -159,18 +160,36 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         const params: Record<string, string> = {};
         if (tagId !== null) params.tag = String(tagId);
         if (selectedDate) params.date = selectedDate;
-        router.get('/home', params, { preserveState: true });
+        setIsFiltering(true);
+        router.get('/home', params, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['entries', 'activeTagId', 'selectedDate'],
+            onFinish: () => setIsFiltering(false),
+        });
     };
 
     const handleDateClick = (date: string | null) => {
         const params: Record<string, string> = {};
         if (activeTagId) params.tag = activeTagId;
         if (date !== null) params.date = date;
-        router.get('/home', params, { preserveState: true });
+        setIsFiltering(true);
+        router.get('/home', params, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['entries', 'activeTagId', 'selectedDate'],
+            onFinish: () => setIsFiltering(false),
+        });
     };
 
     const clearFilters = () => {
-        router.get('/home', {}, { preserveState: true });
+        setIsFiltering(true);
+        router.get('/home', {}, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['entries', 'activeTagId', 'selectedDate'],
+            onFinish: () => setIsFiltering(false),
+        });
     };
 
     return (
@@ -218,7 +237,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                 </div>
 
                 {/* Entry stream - oldest at top, newest at bottom */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 pb-2">
+                <div ref={scrollRef} className={`flex-1 overflow-y-auto scrollbar-thin px-4 pb-2 transition-opacity duration-150 ${isFiltering ? 'opacity-50' : ''}`}>
                     <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">
