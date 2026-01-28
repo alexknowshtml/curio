@@ -2,12 +2,24 @@ import { useState, useRef, useEffect, KeyboardEvent, FormEvent, ClipboardEvent, 
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { TagAutocomplete, refreshTagCache } from './TagAutocomplete';
+import Modal from './Modal';
+
+// Validation limits
+const MAX_CONTENT_LENGTH = 10000; // 10,000 characters
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+
+function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 interface PendingAttachment {
     id: number;
     type: 'image' | 'document' | 'text' | 'other';
     url: string;
     filename: string;
+    original_filename: string;
     mime_type: string;
     size: number;
     human_size: string;
@@ -26,6 +38,20 @@ interface AutocompleteState {
 
 // File extensions we accept
 const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.txt,.md,.markdown,.csv,.json,.html,.htm,.css,.js,.ts,.py,.sh,.bash';
+
+// Rotating placeholder prompts
+const PLACEHOLDERS = [
+    "What's on your mind?",
+    "What are you working on?",
+    "What caught your attention?",
+    "What are you thinking about?",
+    "What are you considering?",
+    "What are you curious about?",
+    "What did you learn today?",
+    "What are you exploring?",
+    "What sparked your interest?",
+    "What's worth remembering?",
+];
 
 // Get file icon based on type
 function getFileIcon(type: string, mimeType: string): string {
@@ -50,9 +76,29 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         query: '',
         startPos: 0,
     });
+    const [errorModal, setErrorModal] = useState<{ show: boolean; title: string; message: string }>({
+        show: false,
+        title: '',
+        message: '',
+    });
+    const [placeholderIndex, setPlaceholderIndex] = useState(() =>
+        Math.floor(Math.random() * PLACEHOLDERS.length)
+    );
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Rotate placeholder every 10 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPlaceholderIndex(prev => (prev + 1) % PLACEHOLDERS.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Validation state
+    const isContentTooLong = content.length > MAX_CONTENT_LENGTH;
+    const contentOverage = content.length - MAX_CONTENT_LENGTH;
 
     // Auto-expand textarea as content grows
     useEffect(() => {
@@ -125,9 +171,11 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         formData.append('file', file);
 
         try {
+            console.log('Uploading file:', file.name, file.type);
             const response = await axios.post('/attachments', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
+            console.log('Upload response:', response.data);
             return response.data.attachment;
         } catch (error) {
             console.error('Failed to upload file:', error);
@@ -150,6 +198,19 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
 
         if (imageFiles.length > 0) {
             e.preventDefault();
+
+            // Check file sizes
+            const oversizedFiles = imageFiles.filter(f => f.size > MAX_FILE_SIZE);
+            if (oversizedFiles.length > 0) {
+                const fileNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+                setErrorModal({
+                    show: true,
+                    title: 'File too large',
+                    message: `The following file(s) exceed the 25 MB limit: ${fileNames}. Try compressing the image or using a smaller file.`,
+                });
+                return;
+            }
+
             setIsUploading(true);
 
             const uploaded = await Promise.all(
@@ -166,10 +227,27 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
+        // Check file sizes before uploading
+        const fileArray = Array.from(files);
+        const oversizedFiles = fileArray.filter(f => f.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+            const fileNames = oversizedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+            setErrorModal({
+                show: true,
+                title: 'File too large',
+                message: `The following file(s) exceed the 25 MB limit: ${fileNames}. Try compressing the file or using a smaller one.`,
+            });
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+            return;
+        }
+
         setIsUploading(true);
 
         const uploadPromises: Promise<PendingAttachment | null>[] = [];
-        for (const file of files) {
+        for (const file of fileArray) {
             uploadPromises.push(uploadFile(file));
         }
 
@@ -202,7 +280,17 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         // Allow submit if there's content OR attachments
         if ((!content.trim() && pendingAttachments.length === 0) || isSubmitting) return;
 
-        const submittedContent = content || '(attachment)';
+        // Check content length
+        if (content.length > MAX_CONTENT_LENGTH) {
+            setErrorModal({
+                show: true,
+                title: 'Message too long',
+                message: `Your message is ${content.length.toLocaleString()} characters, which exceeds the ${MAX_CONTENT_LENGTH.toLocaleString()} character limit. Please shorten your message by ${contentOverage.toLocaleString()} characters.`,
+            });
+            return;
+        }
+
+        const submittedContent = content.trim();
         const submittedAttachments = [...pendingAttachments];
 
         // Optimistic update - immediately show the entry and clear input
@@ -250,7 +338,7 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
         }
     };
 
-    const canSubmit = (content.trim() || pendingAttachments.length > 0) && !isSubmitting && !isUploading;
+    const canSubmit = (content.trim() || pendingAttachments.length > 0) && !isSubmitting && !isUploading && !isContentTooLong;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -314,7 +402,7 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
                     onChange={(e) => setContent(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
-                    placeholder="What's on your mind?"
+                    placeholder={PLACEHOLDERS[placeholderIndex]}
                     disabled={isSubmitting}
                     className="input-curio resize-none flex-1"
                     rows={1}
@@ -357,9 +445,47 @@ export function EntryInput({ onOptimisticSubmit }: EntryInputProps) {
                     disabled={!canSubmit}
                     className="flex-shrink-0 btn-primary"
                 >
-                    {isSubmitting ? 'Saving...' : 'Save'}
+                    {isSubmitting ? 'Posting...' : 'Post'}
                 </button>
             </div>
+
+            {/* Character count warning */}
+            {content.length > MAX_CONTENT_LENGTH * 0.8 && (
+                <div className={`text-xs text-right ${isContentTooLong ? 'text-rose-500 font-medium' : 'text-stone-400 dark:text-stone-500'}`}>
+                    {content.length.toLocaleString()} / {MAX_CONTENT_LENGTH.toLocaleString()} characters
+                    {isContentTooLong && ` (${contentOverage.toLocaleString()} over)`}
+                </div>
+            )}
+
+            {/* Error Modal */}
+            <Modal show={errorModal.show} onClose={() => setErrorModal({ ...errorModal, show: false })} maxWidth="sm">
+                <div className="p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+                                {errorModal.title}
+                            </h3>
+                            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+                                {errorModal.message}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setErrorModal({ ...errorModal, show: false })}
+                            className="btn-primary"
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </form>
     );
 }
