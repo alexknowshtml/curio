@@ -44,7 +44,7 @@ const PLACEHOLDERS = [
     "What are you avoiding?",
     "What's the opposite approach?",
     "What if this were easy?",
-    "What's the real question here?",
+    "What's the real question?",
     "What's missing?",
     "What are you overcomplicating?",
     "What's the smallest step?",
