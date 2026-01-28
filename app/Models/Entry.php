@@ -18,8 +18,13 @@ class Entry extends Model
 
     protected $casts = [
         'has_images' => 'boolean',
-        'created_at' => 'datetime',
     ];
+
+    // Serialize created_at in America/New_York timezone for frontend
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->setTimezone(new \DateTimeZone('America/New_York'))->format('Y-m-d\TH:i:s.uP');
+    }
 
     public function user(): BelongsTo
     {

@@ -28,12 +28,14 @@ class EntryController extends Controller
             });
         }
 
-        // Filter by date if provided
+        // Filter by date if provided (date comes in as America/New_York date string)
         $selectedDate = null;
         if ($request->has('date')) {
             $selectedDate = $request->input('date');
-            $date = Carbon::parse($selectedDate);
-            $query->whereDate('created_at', $date);
+            // Parse as America/New_York date and convert to UTC range
+            $startOfDay = Carbon::parse($selectedDate, 'America/New_York')->startOfDay()->utc();
+            $endOfDay = Carbon::parse($selectedDate, 'America/New_York')->endOfDay()->utc();
+            $query->whereBetween('created_at', [$startOfDay, $endOfDay]);
         }
 
         $entries = $query->limit(100)->get();
@@ -44,11 +46,13 @@ class EntryController extends Controller
         })->orderBy('sigil')->orderBy('name')->get();
 
         // Get dates that have entries (for the date picker)
+        // Convert UTC timestamps to America/New_York for date grouping
         $datesWithEntries = Entry::where('user_id', Auth::id())
-            ->selectRaw('DATE(created_at) as date')
-            ->groupBy('date')
-            ->orderBy('date', 'desc')
-            ->pluck('date')
+            ->get()
+            ->map(fn($e) => $e->created_at->setTimezone('America/New_York')->format('Y-m-d'))
+            ->unique()
+            ->sortDesc()
+            ->values()
             ->toArray();
 
         return Inertia::render('Stream', [
@@ -66,12 +70,19 @@ class EntryController extends Controller
     public function store(Request $request, TagParserService $tagParser)
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:10000',
+            'content' => 'nullable|string|max:10000',
+            'attachment_ids' => 'nullable|array',
         ]);
+
+        // Must have either content or attachments
+        $hasAttachments = !empty($request->input('attachment_ids', $request->input('image_ids', [])));
+        if (empty($validated['content']) && !$hasAttachments) {
+            return back()->withErrors(['content' => 'Entry must have content or attachments.']);
+        }
 
         $entry = Entry::create([
             'user_id' => Auth::id(),
-            'content' => $validated['content'],
+            'content' => $validated['content'] ?? '',
         ]);
 
         // Parse and sync tags from content
