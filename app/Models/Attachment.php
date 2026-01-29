@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class Attachment extends Model
 {
     protected $fillable = [
+        'user_id',
         'entry_id',
         'type',
         'filename',
@@ -19,6 +20,11 @@ class Attachment extends Model
     ];
 
     protected $appends = ['url', 'human_size'];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function entry(): BelongsTo
     {

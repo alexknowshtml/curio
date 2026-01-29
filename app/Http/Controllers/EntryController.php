@@ -68,13 +68,11 @@ class EntryController extends Controller
         })->orderBy('sigil')->orderBy('name')->get();
 
         // Get dates that have entries (for the date picker)
-        // Convert UTC timestamps to America/New_York for date grouping
+        // Use database-level date extraction for efficiency (P2 fix: eliminates N+1 query)
         $datesWithEntries = Entry::where('user_id', Auth::id())
-            ->get()
-            ->map(fn($e) => $e->created_at->setTimezone('America/New_York')->format('Y-m-d'))
-            ->unique()
-            ->sortDesc()
-            ->values()
+            ->selectRaw("DISTINCT DATE(created_at, '-5 hours') as entry_date")
+            ->orderByDesc('entry_date')
+            ->pluck('entry_date')
             ->toArray();
 
         return Inertia::render('Stream', [

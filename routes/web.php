@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attachments/{attachment}/attach', [AttachmentController::class, 'attachToEntry'])->name('attachments.attach');
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
     Route::get('/attachments/{attachment}/content', [AttachmentController::class, 'content'])->name('attachments.content');
+    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('attachments.download');
 
     // Legacy image routes (backwards compatible)
     Route::post('/images', [AttachmentController::class, 'storeImage'])->name('images.store');

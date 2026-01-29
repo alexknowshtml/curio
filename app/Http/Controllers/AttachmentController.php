@@ -61,10 +61,17 @@ class AttachmentController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
         $mimeType = $file->getMimeType();
 
-        // Validate file type by extension and mime
+        // Validate file type by extension
         if (!in_array($extension, self::ALLOWED_EXTENSIONS)) {
             return response()->json([
                 'error' => 'File type not allowed. Supported: images, PDFs, and text files.',
+            ], 422);
+        }
+
+        // Validate MIME type (P0 security fix)
+        if (!in_array($mimeType, self::ALLOWED_MIMES)) {
+            return response()->json([
+                'error' => 'File type not allowed. MIME type mismatch.',
             ], 422);
         }
 
@@ -94,6 +101,7 @@ class AttachmentController extends Controller
         }
 
         $attachment = Attachment::create([
+            'user_id' => Auth::id(), // Track uploader for security
             'entry_id' => $entryId,
             'type' => $type,
             'filename' => $filename,
@@ -156,6 +164,11 @@ class AttachmentController extends Controller
             return response()->json(['error' => 'Attachment already attached'], 400);
         }
 
+        // Security: verify the current user uploaded this attachment
+        if ($attachment->user_id !== Auth::id()) {
+            abort(403, 'Not authorized to attach this file');
+        }
+
         $entry = Entry::where('id', $request->entry_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
@@ -171,15 +184,20 @@ class AttachmentController extends Controller
      */
     public function destroy(Attachment $attachment)
     {
-        // Only allow deletion if the attachment belongs to an entry owned by the user
-        // or if the attachment is unattached (uploaded but not yet saved with entry)
-        if ($attachment->entry_id !== null) {
-            $entry = Entry::where('id', $attachment->entry_id)
-                ->where('user_id', Auth::id())
-                ->first();
+        // Security: verify ownership via user_id or entry ownership
+        if ($attachment->user_id !== Auth::id()) {
+            // Fallback: check entry ownership (for legacy attachments without user_id)
+            if ($attachment->entry_id !== null) {
+                $entry = Entry::where('id', $attachment->entry_id)
+                    ->where('user_id', Auth::id())
+                    ->first();
 
-            if (!$entry) {
-                abort(403);
+                if (!$entry) {
+                    abort(403, 'Not authorized to delete this attachment');
+                }
+            } else {
+                // Unattached file with different user_id
+                abort(403, 'Not authorized to delete this attachment');
             }
         }
 
@@ -193,6 +211,46 @@ class AttachmentController extends Controller
     }
 
     /**
+     * Download an attachment with security headers
+     * Forces download for potentially dangerous file types (SVG, HTML)
+     */
+    public function download(Attachment $attachment)
+    {
+        // Security: verify ownership via user_id or entry ownership
+        if ($attachment->user_id !== Auth::id()) {
+            // Fallback: check entry ownership (for legacy attachments without user_id)
+            if ($attachment->entry_id !== null) {
+                $entry = Entry::where('id', $attachment->entry_id)
+                    ->where('user_id', Auth::id())
+                    ->first();
+
+                if (!$entry) {
+                    abort(403, 'Not authorized to access this attachment');
+                }
+            } else {
+                // Unattached file with different user_id
+                abort(403, 'Not authorized to access this attachment');
+            }
+        }
+
+        $path = Storage::disk('public')->path($attachment->path);
+
+        if (!file_exists($path)) {
+            abort(404, 'File not found');
+        }
+
+        // Security headers to prevent XSS from SVG/HTML files
+        $headers = [
+            'Content-Type' => $attachment->mime_type,
+            'Content-Disposition' => 'attachment; filename="' . $attachment->original_filename . '"',
+            'Content-Security-Policy' => "sandbox",
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        return response()->file($path, $headers);
+    }
+
+    /**
      * Get text content for text-type attachments
      */
     public function content(Attachment $attachment)
@@ -201,14 +259,20 @@ class AttachmentController extends Controller
             return response()->json(['error' => 'Not a text file'], 400);
         }
 
-        // Verify ownership
-        if ($attachment->entry_id !== null) {
-            $entry = Entry::where('id', $attachment->entry_id)
-                ->where('user_id', Auth::id())
-                ->first();
+        // Security: verify ownership via user_id or entry ownership
+        if ($attachment->user_id !== Auth::id()) {
+            // Fallback: check entry ownership (for legacy attachments without user_id)
+            if ($attachment->entry_id !== null) {
+                $entry = Entry::where('id', $attachment->entry_id)
+                    ->where('user_id', Auth::id())
+                    ->first();
 
-            if (!$entry) {
-                abort(403);
+                if (!$entry) {
+                    abort(403, 'Not authorized to access this attachment');
+                }
+            } else {
+                // Unattached file with different user_id
+                abort(403, 'Not authorized to access this attachment');
             }
         }
 
