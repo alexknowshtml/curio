@@ -20,6 +20,14 @@ const PLACEHOLDERS = [
     "What sparked this?",
 ];
 
+// Entry type for the landing page content
+type LandingEntry = {
+    text: string;
+    time: string;
+    screenshot?: string; // Path to screenshot image
+    screenshotAlt?: string;
+};
+
 export default function Welcome({
     auth,
 }: PageProps) {
@@ -35,12 +43,41 @@ export default function Welcome({
         return () => clearInterval(interval);
     }, []);
 
-    const entries = [
+    const entries: LandingEntry[] = [
         { text: "have you ever noticed that it's easier to start typing into an empty chat box than a blank document?", time: "9:46 PM" },
         { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
         { text: "but for a lot of us, the easiest drafting mode is a tiny text box.", time: "9:47 PM" },
         { text: "that's why i made curio, a simple chat ui for turning your inner monologue into something more useful than anxiety", time: "9:48 PM" },
+        // Screenshot: empty stream with rotating prompt
+        { text: "just type what's on your mind. curio saves it automatically as you go.", time: "9:48 PM", screenshot: "/images/landing/stream-empty.png", screenshotAlt: "Empty Curio stream with rotating prompt" },
+        { text: "tag people and projects with @mentions - they become filters so you can find everything about @amy or #curio later", time: "9:49 PM", screenshot: "/images/landing/tags.png", screenshotAlt: "Entry with @amy tag showing tag pill styling" },
+        { text: "drop in images, screenshots, files. they just go with your thought.", time: "9:49 PM", screenshot: "/images/landing/attachment.png", screenshotAlt: "Entry with an image attached" },
+        { text: "tap a date to see just that day. tap yesterday, today, or browse the calendar.", time: "9:50 PM", screenshot: "/images/landing/date-filter.png", screenshotAlt: "Date filter buttons and calendar picker" },
+        { text: "it's private, it's yours, it's simple. no likes, no followers, no algorithm.", time: "9:50 PM" },
     ];
+
+    // Screenshot placeholder component
+    const ScreenshotPlaceholder = ({ src, alt }: { src: string; alt: string }) => (
+        <div className="my-4 flex justify-center">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-stone-200 dark:border-stone-700 max-w-sm">
+                <img
+                    src={src}
+                    alt={alt}
+                    className="w-full h-auto"
+                    onError={(e) => {
+                        // Show placeholder if image doesn't exist yet
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.parentElement!.innerHTML = `
+                            <div class="bg-stone-100 dark:bg-stone-800 px-8 py-16 text-center">
+                                <p class="text-stone-400 dark:text-stone-500 text-sm">[Screenshot: ${alt}]</p>
+                            </div>
+                        `;
+                    }}
+                />
+            </div>
+        </div>
+    );
 
     return (
         <>
@@ -93,17 +130,22 @@ export default function Welcome({
                         {/* Entries */}
                         <div className="space-y-4">
                             {entries.map((entry, i) => (
-                                <div key={i} className="group">
-                                    <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
-                                        <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                                            {entry.text}
-                                        </p>
+                                <div key={i}>
+                                    <div className="group">
+                                        <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
+                                            <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
+                                                {entry.text}
+                                            </p>
+                                        </div>
+                                        <div className="text-right mt-1 pr-2">
+                                            <span className="text-xs text-stone-400 dark:text-stone-500">
+                                                {entry.time}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="text-right mt-1 pr-2">
-                                        <span className="text-xs text-stone-400 dark:text-stone-500">
-                                            {entry.time}
-                                        </span>
-                                    </div>
+                                    {entry.screenshot && (
+                                        <ScreenshotPlaceholder src={entry.screenshot} alt={entry.screenshotAlt || ''} />
+                                    )}
                                 </div>
                             ))}
 
@@ -122,7 +164,7 @@ export default function Welcome({
                                 </div>
                                 <div className="text-right mt-1 pr-2">
                                     <span className="text-xs text-stone-400 dark:text-stone-500">
-                                        9:49 PM
+                                        9:51 PM
                                     </span>
                                 </div>
                             </div>
