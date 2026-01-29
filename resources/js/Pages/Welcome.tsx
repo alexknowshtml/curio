@@ -40,6 +40,11 @@ export default function Welcome({
         { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
         { text: "but for a lot of us, the easiest drafting mode is a tiny text box.", time: "9:47 PM" },
         { text: "that's why i made curio, a simple chat ui for turning your inner monologue into something more useful than anxiety", time: "9:48 PM" },
+        { text: "no setup. no folders. no templates. just start typing.", time: "9:49 PM" },
+        { text: "want to organize your thoughts? drop an @project or #idea tag anywhere. they become filters automatically. build your own system as you go.", time: "9:50 PM" },
+        { text: "need to find something you wrote last week? just search. everything is instantly searchable.", time: "9:51 PM" },
+        { text: "works on your phone, your laptop, wherever. save it to your dock or homescreen for the best experience.", time: "9:52 PM" },
+        { text: "everything stays private and safe. use my hosted version or run it yourself if you're into that.", time: "9:53 PM" },
     ];
 
     return (
@@ -111,18 +116,18 @@ export default function Welcome({
                             <div className="group">
                                 <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
                                     <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                                        it's free to try at{' '}
+                                        ready to try it?{' '}
                                         <Link
                                             href={route('register')}
                                             className="text-amber-600 dark:text-amber-500 hover:underline"
                                         >
-                                            curio.stackingthebricks.com
+                                            sign up free
                                         </Link>
                                     </p>
                                 </div>
                                 <div className="text-right mt-1 pr-2">
                                     <span className="text-xs text-stone-400 dark:text-stone-500">
-                                        9:49 PM
+                                        9:54 PM
                                     </span>
                                 </div>
                             </div>
