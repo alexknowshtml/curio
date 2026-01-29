@@ -14,6 +14,12 @@ services:
       - APP_DEBUG=true
       - DB_CONNECTION=sqlite
       - DB_DATABASE=/var/www/html/database/database.sqlite
+      # DO Spaces credentials for backups (set in .env file)
+      - DO_SPACES_ACCESS_KEY=${DO_SPACES_ACCESS_KEY:-}
+      - DO_SPACES_SECRET_KEY=${DO_SPACES_SECRET_KEY:-}
+      - DO_SPACES_BUCKET=${DO_SPACES_BUCKET:-andy-database-backup}
+      - DO_SPACES_REGION=${DO_SPACES_REGION:-nyc3}
+      - DO_SPACES_ENDPOINT=${DO_SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
     networks:
       - curio
 
