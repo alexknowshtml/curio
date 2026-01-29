@@ -176,6 +176,7 @@ class EntryController extends Controller
 
     /**
      * Search entries by content
+     * Note: Content is encrypted at rest, so we decrypt and filter in PHP
      */
     public function search(Request $request)
     {
@@ -199,12 +200,18 @@ class EntryController extends Controller
             return response()->json([]);
         }
 
+        // Since content is encrypted, we load all user entries and filter in PHP
+        // This is fine for personal use; for large datasets, consider encrypted search indexes
+        $searchTerm = mb_strtolower($query);
         $entries = Entry::where('user_id', Auth::id())
-            ->where('content', 'like', '%' . $query . '%')
             ->with(['tags', 'attachments'])
             ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get();
+            ->get()
+            ->filter(function ($entry) use ($searchTerm) {
+                return str_contains(mb_strtolower($entry->content ?? ''), $searchTerm);
+            })
+            ->take(20)
+            ->values();
 
         return response()->json($entries);
     }

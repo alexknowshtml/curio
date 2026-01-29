@@ -91,6 +91,9 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                 >
                                     Profile
                                 </Link>
+                                <span className="block px-4 py-2 text-sm text-stone-400 dark:text-stone-500 cursor-default">
+                                    Export <span className="text-xs">(coming soon)</span>
+                                </span>
                                 <Link
                                     href={route('logout')}
                                     method="post"
