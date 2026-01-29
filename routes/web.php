@@ -15,7 +15,9 @@ Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('home');
     }
-    return redirect()->route('login');
+    return Inertia::render('Welcome', [
+        'auth' => ['user' => null],
+    ]);
 });
 
 // Redirect legacy routes
