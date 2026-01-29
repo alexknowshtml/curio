@@ -12,10 +12,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // SQLite doesn't support adding foreign key constraints to existing tables
+        // Use unsignedBigInteger instead of foreignId to avoid constraint issues
         Schema::table('attachments', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('id')->constrained()->onDelete('cascade');
-            $table->index('entry_id'); // P2: Add missing index
+            $table->unsignedBigInteger('user_id')->nullable();
         });
+
+        // Add index on entry_id for query performance (P2 fix)
+        // Check if index exists first to avoid errors on re-runs
+        if (!Schema::hasIndex('attachments', 'attachments_entry_id_index')) {
+            Schema::table('attachments', function (Blueprint $table) {
+                $table->index('entry_id');
+            });
+        }
 
         // Backfill user_id from entry ownership for existing attachments
         DB::statement('UPDATE attachments SET user_id = (SELECT user_id FROM entries WHERE entries.id = attachments.entry_id) WHERE entry_id IS NOT NULL');
@@ -27,9 +36,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('attachments', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
             $table->dropColumn('user_id');
-            $table->dropIndex(['entry_id']);
         });
+
+        // Note: leaving the entry_id index as it improves performance
     }
 };
