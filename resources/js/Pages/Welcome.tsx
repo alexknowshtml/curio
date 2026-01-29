@@ -20,66 +20,6 @@ const PLACEHOLDERS = [
     "What sparked this?",
 ];
 
-// Mock UI Components that look like the real app
-const MockEntry = ({ children, time }: { children: React.ReactNode; time: string }) => (
-    <div className="group">
-        <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
-            {children}
-        </div>
-        <div className="text-right mt-1 pr-2">
-            <span className="text-xs text-stone-400 dark:text-stone-500">{time}</span>
-        </div>
-    </div>
-);
-
-const MockTag = ({ children, type = 'person' }: { children: string; type?: 'person' | 'project' }) => (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-        type === 'person'
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-    }`}>
-        {type === 'person' ? '@' : '#'}{children}
-    </span>
-);
-
-const MockImage = () => (
-    <div className="mt-2 rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 dark:from-amber-900/20 dark:via-orange-900/20 dark:to-rose-900/20 aspect-video flex items-center justify-center">
-        <svg className="w-12 h-12 text-amber-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-    </div>
-);
-
-const MockDateFilter = () => (
-    <div className="flex items-center gap-2 justify-center">
-        <button className="px-3 py-1.5 text-xs font-medium rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
-            Yesterday
-        </button>
-        <button className="px-3 py-1.5 text-xs font-medium rounded-full bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-800">
-            Today
-        </button>
-        <button className="px-3 py-1.5 text-xs font-medium rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Jan 28
-        </button>
-    </div>
-);
-
-const MockInput = ({ placeholder }: { placeholder: string }) => (
-    <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 border border-stone-200 dark:border-stone-700 text-stone-400 dark:text-stone-500 text-[15px]">
-        {placeholder}
-    </div>
-);
-
-// Entry type for the landing page content
-type LandingEntry = {
-    text?: string;
-    time: string;
-    component?: React.ReactNode;
-};
-
 export default function Welcome({
     auth,
 }: PageProps) {
@@ -95,57 +35,11 @@ export default function Welcome({
         return () => clearInterval(interval);
     }, []);
 
-    const entries: LandingEntry[] = [
+    const entries = [
         { text: "have you ever noticed that it's easier to start typing into an empty chat box than a blank document?", time: "9:46 PM" },
         { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
         { text: "but for a lot of us, the easiest drafting mode is a tiny text box.", time: "9:47 PM" },
         { text: "that's why i made curio, a simple chat ui for turning your inner monologue into something more useful than anxiety", time: "9:48 PM" },
-        { text: "just type what's on your mind. curio saves it automatically as you go.", time: "9:48 PM" },
-        // Mock: input with rotating prompt
-        {
-            time: "",
-            component: (
-                <div className="my-2">
-                    <MockInput placeholder="What's the smallest step?" />
-                </div>
-            )
-        },
-        { text: "tag people and projects with @mentions - they become filters so you can find everything later", time: "9:49 PM" },
-        // Mock: entry with tags
-        {
-            time: "9:49 PM",
-            component: (
-                <MockEntry time="9:49 PM">
-                    <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                        talked to <MockTag>amy</MockTag> about the <MockTag type="project">curio</MockTag> launch - she had great ideas about the onboarding flow
-                    </p>
-                </MockEntry>
-            )
-        },
-        { text: "drop in images, screenshots, files. they just go with your thought.", time: "9:50 PM" },
-        // Mock: entry with image
-        {
-            time: "9:50 PM",
-            component: (
-                <MockEntry time="9:50 PM">
-                    <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                        this sketch from the whiteboard session
-                    </p>
-                    <MockImage />
-                </MockEntry>
-            )
-        },
-        { text: "tap a date to see just that day. yesterday, today, or pick from the calendar.", time: "9:51 PM" },
-        // Mock: date filter
-        {
-            time: "",
-            component: (
-                <div className="my-4">
-                    <MockDateFilter />
-                </div>
-            )
-        },
-        { text: "it's private, it's yours, it's simple. no likes, no followers, no algorithm.", time: "9:52 PM" },
     ];
 
     return (
@@ -199,31 +93,39 @@ export default function Welcome({
                         {/* Entries */}
                         <div className="space-y-4">
                             {entries.map((entry, i) => (
-                                <div key={i}>
-                                    {entry.component ? (
-                                        entry.component
-                                    ) : (
-                                        <MockEntry time={entry.time}>
-                                            <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                                                {entry.text}
-                                            </p>
-                                        </MockEntry>
-                                    )}
+                                <div key={i} className="group">
+                                    <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
+                                        <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
+                                            {entry.text}
+                                        </p>
+                                    </div>
+                                    <div className="text-right mt-1 pr-2">
+                                        <span className="text-xs text-stone-400 dark:text-stone-500">
+                                            {entry.time}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
 
                             {/* CTA entry */}
-                            <MockEntry time="9:53 PM">
-                                <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
-                                    it's free to try at{' '}
-                                    <Link
-                                        href={route('register')}
-                                        className="text-amber-600 dark:text-amber-500 hover:underline"
-                                    >
-                                        curio.stackingthebricks.com
-                                    </Link>
-                                </p>
-                            </MockEntry>
+                            <div className="group">
+                                <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
+                                    <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
+                                        it's free to try at{' '}
+                                        <Link
+                                            href={route('register')}
+                                            className="text-amber-600 dark:text-amber-500 hover:underline"
+                                        >
+                                            curio.stackingthebricks.com
+                                        </Link>
+                                    </p>
+                                </div>
+                                <div className="text-right mt-1 pr-2">
+                                    <span className="text-xs text-stone-400 dark:text-stone-500">
+                                        9:49 PM
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </main>
