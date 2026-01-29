@@ -1,6 +1,6 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 
 const PLACEHOLDERS = [
     "What are you avoiding?",
@@ -35,16 +35,17 @@ export default function Welcome({
         return () => clearInterval(interval);
     }, []);
 
-    const entries = [
+    const entries: { text: ReactNode; time: string }[] = [
         { text: "have you ever noticed that it's easier to start typing into an empty chat box than a blank document?", time: "9:46 PM" },
-        { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
+        { text: <>maybe it's because i grew up in chat rooms, or because i wrote <a href="https://tiny.mba" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-500 hover:underline">my best work</a> 140 characters at a time on twitter</>, time: "9:47 PM" },
         { text: "but for a lot of us, the easiest drafting mode is a tiny text box.", time: "9:47 PM" },
-        { text: "that's why i made curio, a simple chat ui for turning your inner monologue into something more useful than anxiety", time: "9:48 PM" },
+        { text: <>that's why i made curio, a simple chat ui for turning your <em>inner monologue</em> into your <strong>newest rough drafts</strong></>, time: "9:48 PM" },
         { text: "no setup. no folders. no templates. just start typing.", time: "9:49 PM" },
-        { text: "want to organize your thoughts? drop an @project or #idea tag anywhere. they become filters automatically. build your own system as you go.", time: "9:50 PM" },
+        { text: <>want to organize your thoughts? drop an <span className="inline-flex px-1.5 py-0.5 rounded text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">@project</span> or <span className="inline-flex px-1.5 py-0.5 rounded text-sm bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">#idea</span> tag anywhere. they become filters automatically. build your own system as you go.</>, time: "9:50 PM" },
         { text: "need to find something you wrote last week? just search. everything is instantly searchable.", time: "9:51 PM" },
         { text: "works on your phone, your laptop, wherever. save it to your dock or homescreen for the best experience.", time: "9:52 PM" },
-        { text: "everything stays private and safe. use my hosted version or run it yourself if you're into that.", time: "9:53 PM" },
+        { text: "your data is encrypted on our servers. full end-to-end encryption is coming soon for those who want the extra layer.", time: "9:53 PM" },
+        { text: <>use my hosted version or <a href="https://github.com/alexknowshtml/curio" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-500 hover:underline">run it yourself</a> if you're into that.</>, time: "9:54 PM" },
     ];
 
     return (
@@ -127,7 +128,7 @@ export default function Welcome({
                                 </div>
                                 <div className="text-right mt-1 pr-2">
                                     <span className="text-xs text-stone-400 dark:text-stone-500">
-                                        9:54 PM
+                                        9:55 PM
                                     </span>
                                 </div>
                             </div>
