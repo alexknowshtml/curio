@@ -1,9 +1,40 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+
+const PLACEHOLDERS = [
+    "What are you avoiding?",
+    "Try the opposite?",
+    "What if this were easy?",
+    "What's the real question?",
+    "What's missing?",
+    "Overcomplicating this?",
+    "What's the smallest step?",
+    "What are you not saying?",
+    "What would make this fun?",
+    "What's obvious here?",
+    "What if you did nothing?",
+    "What's simpler?",
+    "What would a friend say?",
+    "What's worth remembering?",
+    "What sparked this?",
+];
 
 export default function Welcome({
     auth,
 }: PageProps) {
+    const [placeholderIndex, setPlaceholderIndex] = useState(() =>
+        Math.floor(Math.random() * PLACEHOLDERS.length)
+    );
+
+    // Rotate placeholder every 10 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPlaceholderIndex(prev => (prev + 1) % PLACEHOLDERS.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
     const entries = [
         { text: "have you ever noticed that it's easier to start typing into an empty chat box than a blank document?", time: "9:46 PM" },
         { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
@@ -99,14 +130,14 @@ export default function Welcome({
                     </div>
                 </main>
 
-                {/* Fake input area */}
+                {/* Fake input area with rotating prompts */}
                 <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
                     <div className="max-w-2xl mx-auto">
                         <Link
                             href={route('register')}
                             className="block w-full bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 text-stone-400 dark:text-stone-500 text-[15px] border border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 transition-colors cursor-pointer"
                         >
-                            What's obvious here?
+                            {PLACEHOLDERS[placeholderIndex]}
                         </Link>
                     </div>
                 </div>
