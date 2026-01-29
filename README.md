@@ -2,6 +2,10 @@
 
 A personal knowledge capture and reflection tool. Think of it as a private stream of consciousness - quick thoughts, ideas, links, and observations that you want to capture without the friction of organizing them.
 
+<p align="center">
+  <img src="docs/images/curio-mobile.png" alt="Curio on mobile" width="300">
+</p>
+
 ## Features
 
 - **Quick Capture** - Post thoughts instantly with a chat-like interface
