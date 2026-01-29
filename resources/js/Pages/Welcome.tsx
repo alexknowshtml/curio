@@ -143,7 +143,7 @@ export default function Welcome({
                 </div>
 
                 {/* Footer */}
-                <footer className="flex-shrink-0 pt-4 pb-8 text-center">
+                <footer className="flex-shrink-0 pt-2 pb-8 text-center">
                     <p className="text-sm text-stone-400 dark:text-stone-500">
                         Brought to you by Amy & Alex at{' '}
                         <a
