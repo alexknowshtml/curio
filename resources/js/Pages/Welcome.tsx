@@ -14,9 +14,9 @@ export default function Welcome({
     return (
         <>
             <Head title="Curio" />
-            <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex flex-col">
+            <div className="h-screen bg-stone-50 dark:bg-stone-900 flex flex-col overflow-hidden">
                 {/* Header mimicking the app */}
-                <header className="border-b border-stone-200/50 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-sm">
+                <header className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-sm">
                     <div className="flex items-center justify-between h-14 px-4 max-w-4xl mx-auto w-full">
                         <div className="flex items-center gap-2">
                             <span className="text-lg font-semibold text-stone-800 dark:text-stone-100">Curio</span>
@@ -50,7 +50,7 @@ export default function Welcome({
                 </header>
 
                 {/* Stream-style content */}
-                <main className="flex-1 overflow-auto">
+                <main className="flex-1 overflow-y-auto min-h-0">
                     <div className="max-w-2xl mx-auto px-4 py-8">
                         {/* Date header */}
                         <div className="text-center mb-6">
@@ -100,7 +100,7 @@ export default function Welcome({
                 </main>
 
                 {/* Fake input area */}
-                <div className="border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
+                <div className="flex-shrink-0 border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
                     <div className="max-w-2xl mx-auto">
                         <Link
                             href={route('register')}
