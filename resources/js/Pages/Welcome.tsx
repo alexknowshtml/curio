@@ -141,6 +141,21 @@ export default function Welcome({
                         </Link>
                     </div>
                 </div>
+
+                {/* Footer */}
+                <footer className="flex-shrink-0 py-4 text-center">
+                    <p className="text-sm text-stone-400 dark:text-stone-500">
+                        Brought to you by Amy & Alex at{' '}
+                        <a
+                            href="https://stackingthebricks.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-600 dark:text-amber-500 hover:underline"
+                        >
+                            Stacking the Bricks
+                        </a>
+                    </p>
+                </footer>
             </div>
         </>
     );
