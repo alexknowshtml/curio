@@ -15,24 +15,45 @@ class EntryController extends Controller
     /**
      * Display the entry stream
      */
-    public function index(Request $request)
+    public function index(Request $request, ?string $tagSlug = null, ?string $dateSlug = null)
     {
         $query = Entry::where('user_id', Auth::id())
             ->with(['tags', 'attachments'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by tag if provided
-        if ($request->has('tag')) {
-            $tagId = $request->input('tag');
-            $query->whereHas('tags', function ($q) use ($tagId) {
-                $q->where('tags.id', $tagId);
-            });
+        // Handle the case where tagSlug is actually a date (from /home/{dateSlug} route)
+        // Date format: YYYY-MM-DD
+        if ($tagSlug && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tagSlug)) {
+            $dateSlug = $tagSlug;
+            $tagSlug = null;
         }
 
-        // Filter by date if provided (date comes in as America/New_York date string)
-        $selectedDate = null;
-        if ($request->has('date')) {
-            $selectedDate = $request->input('date');
+        // Resolve tag from slug (e.g., "@person" or "#project") or legacy query param
+        $activeTag = null;
+        if ($tagSlug) {
+            // URL-decode the slug (handles %40 -> @ and %23 -> #)
+            $tagSlug = urldecode($tagSlug);
+            $sigil = substr($tagSlug, 0, 1);
+            $tagName = substr($tagSlug, 1);
+
+            $activeTag = \App\Models\Tag::where('sigil', $sigil)
+                ->where('name', $tagName)
+                ->whereHas('entries', fn($q) => $q->where('user_id', Auth::id()))
+                ->first();
+
+            if ($activeTag) {
+                $query->whereHas('tags', fn($q) => $q->where('tags.id', $activeTag->id));
+            }
+        } elseif ($request->has('tag')) {
+            // Legacy: support old ?tag=123 URLs
+            $tagId = $request->input('tag');
+            $activeTag = \App\Models\Tag::find($tagId);
+            $query->whereHas('tags', fn($q) => $q->where('tags.id', $tagId));
+        }
+
+        // Filter by date from slug or query param
+        $selectedDate = $dateSlug ?? $request->input('date');
+        if ($selectedDate) {
             // Parse as America/New_York date and convert to UTC range
             $startOfDay = Carbon::parse($selectedDate, 'America/New_York')->startOfDay()->utc();
             $endOfDay = Carbon::parse($selectedDate, 'America/New_York')->endOfDay()->utc();
@@ -59,7 +80,12 @@ class EntryController extends Controller
         return Inertia::render('Stream', [
             'entries' => $entries,
             'allTags' => $allTags,
-            'activeTagId' => $request->input('tag'),
+            'activeTag' => $activeTag ? [
+                'id' => $activeTag->id,
+                'sigil' => $activeTag->sigil,
+                'name' => $activeTag->name,
+                'slug' => $activeTag->sigil . $activeTag->name,
+            ] : null,
             'selectedDate' => $selectedDate,
             'datesWithEntries' => $datesWithEntries,
             'highlightEntryId' => $request->has('highlight') ? (int) $request->input('highlight') : null,

@@ -1,6 +1,6 @@
 import { ThemeToggle } from '@/Components/ThemeToggle';
 import { GlobalSearch } from '@/Components/GlobalSearch';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { PropsWithChildren, useState, useEffect, useRef } from 'react';
 
 export default function Authenticated({ children }: PropsWithChildren) {
@@ -37,12 +37,35 @@ export default function Authenticated({ children }: PropsWithChildren) {
             {/* Minimal header */}
             <header className="flex-shrink-0 border-b border-stone-200/50 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-sm relative z-50">
                 <div className="flex items-center justify-between h-14 px-4 max-w-4xl mx-auto w-full gap-4">
-                    <Link
-                        href="/home"
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            const currentPath = window.location.pathname;
+                            // Check for filters in both query params (legacy) and clean URL paths
+                            const hasQueryFilters = window.location.search.includes('tag=') || window.location.search.includes('date=');
+                            const hasPathFilters = currentPath !== '/home' && currentPath.startsWith('/home/');
+
+                            if (currentPath === '/home' && !hasQueryFilters) {
+                                // Already on home with no filters - just scroll to bottom
+                                const scrollContainer = document.querySelector('[data-stream-container]');
+                                if (scrollContainer) {
+                                    scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                                }
+                            } else if (hasPathFilters || hasQueryFilters) {
+                                // Navigate to home (clears filters)
+                                router.visit('/home', { preserveState: false });
+                            } else {
+                                // Just scroll to bottom
+                                const scrollContainer = document.querySelector('[data-stream-container]');
+                                if (scrollContainer) {
+                                    scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                                }
+                            }
+                        }}
                         className="text-lg font-semibold text-stone-800 dark:text-stone-100 tracking-tight flex-shrink-0"
                     >
                         Curio
-                    </Link>
+                    </button>
 
                     <GlobalSearch />
 

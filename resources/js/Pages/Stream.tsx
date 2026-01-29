@@ -33,10 +33,17 @@ interface Entry {
     attachments: Attachment[];
 }
 
+interface ActiveTag {
+    id: number;
+    sigil: string;
+    name: string;
+    slug: string;
+}
+
 interface Props {
     entries: Entry[];
     allTags: Tag[];
-    activeTagId: string | null;
+    activeTag: ActiveTag | null;
     selectedDate: string | null;
     datesWithEntries: string[];
     highlightEntryId: number | null;
@@ -50,7 +57,7 @@ function formatDateHeader(dateStr: string): { label: string; date: string } {
     return { label: format(date, 'EEEE'), date: dateFormatted };
 }
 
-export default function Stream({ entries, allTags, activeTagId, selectedDate, datesWithEntries, highlightEntryId }: Props) {
+export default function Stream({ entries, allTags, activeTag, selectedDate, datesWithEntries, highlightEntryId }: Props) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const allButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,13 +69,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
     const [highlightedId, setHighlightedId] = useState<number | null>(highlightEntryId);
 
     // Track if we have an active filter (tag or date that's not today)
-    const hasActiveFilter = !!activeTagId || (!!selectedDate && !isToday(parseISO(selectedDate)));
-
-    // Get the active tag object for display in modals
-    const activeTag = useMemo(() => {
-        if (!activeTagId) return null;
-        return allTags.find(t => t.id === Number(activeTagId)) || null;
-    }, [activeTagId, allTags]);
+    const hasActiveFilter = !!activeTag || (!!selectedDate && !isToday(parseISO(selectedDate)));
 
     // Handle highlight from search - scroll to entry and keep highlighted until user clicks
     useEffect(() => {
@@ -301,28 +302,37 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         };
     }, [highlightEntryId]); // Only on mount, skip if highlight present
 
+    // Build clean URL path from tag and date
+    const buildCleanUrl = (tag: { sigil: string; name: string } | null, date: string | null) => {
+        let path = '/home';
+        if (tag) {
+            path += `/${tag.sigil}${tag.name}`;
+        }
+        if (date) {
+            path += `/${date}`;
+        }
+        return path;
+    };
+
     const handleTagClick = (tagId: number | null) => {
-        const params: Record<string, string> = {};
-        if (tagId !== null) params.tag = String(tagId);
-        if (selectedDate) params.date = selectedDate;
         setIsFiltering(true);
-        router.get('/home', params, {
+        const tag = tagId !== null ? allTags.find(t => t.id === tagId) : null;
+        const url = buildCleanUrl(tag ?? null, selectedDate);
+        router.get(url, {}, {
             preserveState: true,
             preserveScroll: true,
-            only: ['entries', 'activeTagId', 'selectedDate'],
+            only: ['entries', 'activeTag', 'selectedDate'],
             onFinish: () => setIsFiltering(false),
         });
     };
 
     const handleDateClick = (date: string | null) => {
-        const params: Record<string, string> = {};
-        if (activeTagId) params.tag = activeTagId;
-        if (date !== null) params.date = date;
         setIsFiltering(true);
-        router.get('/home', params, {
+        const url = buildCleanUrl(activeTag, date);
+        router.get(url, {}, {
             preserveState: true,
             preserveScroll: true,
-            only: ['entries', 'activeTagId', 'selectedDate'],
+            only: ['entries', 'activeTag', 'selectedDate'],
             onFinish: () => setIsFiltering(false),
         });
     };
@@ -332,7 +342,7 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
         router.get('/home', {}, {
             preserveState: true,
             preserveScroll: true,
-            only: ['entries', 'activeTagId', 'selectedDate'],
+            only: ['entries', 'activeTag', 'selectedDate'],
             onFinish: () => setIsFiltering(false),
         });
     };
@@ -414,14 +424,14 @@ export default function Stream({ entries, allTags, activeTagId, selectedDate, da
                         {/* Tag dropdown - right side */}
                         <TagFilterDropdown
                             allTags={allTags}
-                            activeTagId={activeTagId}
+                            activeTagId={activeTag?.id ? String(activeTag.id) : null}
                             onTagClick={handleTagClick}
                         />
                     </div>
                 </div>
 
                 {/* Entry stream - oldest at top, newest at bottom */}
-                <div ref={scrollRef} className={`flex-1 overflow-y-auto scrollbar-thin px-4 pb-2 transition-opacity duration-150 ${isFiltering ? 'opacity-50' : ''}`}>
+                <div ref={scrollRef} data-stream-container className={`flex-1 overflow-y-auto scrollbar-thin px-4 pb-2 transition-opacity duration-150 ${isFiltering ? 'opacity-50' : ''}`}>
                     <div className="max-w-3xl mx-auto">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">

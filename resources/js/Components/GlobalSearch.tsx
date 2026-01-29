@@ -238,10 +238,10 @@ export function GlobalSearch() {
                     placeholder="Search..."
                     className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg
                              bg-stone-100 dark:bg-stone-800
-                             border-0
+                             border border-stone-200 dark:border-stone-700
                              text-stone-800 dark:text-stone-200
                              placeholder:text-stone-400 dark:placeholder:text-stone-500
-                             focus:outline-none focus:ring-2 focus:ring-amber-500/50
+                             focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent
                              transition-shadow"
                 />
                 {isLoading && (

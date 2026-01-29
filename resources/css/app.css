@@ -101,10 +101,11 @@
 
     /* Input styling */
     .input-curio {
-        @apply w-full rounded-xl border-0 bg-stone-100 dark:bg-stone-800;
+        @apply w-full rounded-xl bg-stone-100 dark:bg-stone-800;
+        @apply border border-stone-200 dark:border-stone-700;
         @apply px-4 py-3 text-stone-900 dark:text-stone-100;
         @apply placeholder:text-stone-400 dark:placeholder:text-stone-500;
-        @apply focus:outline-none focus:ring-2 focus:ring-amber-500/50;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent;
         @apply transition-shadow duration-150;
         line-height: 1.4;
     }

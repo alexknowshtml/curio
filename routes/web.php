@@ -24,8 +24,24 @@ Route::get('/stream', fn() => redirect()->route('home'))->middleware(['auth', 'v
 
 // Main app routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Home (main capture view)
+    // Home (main capture view) - clean URL routes
     Route::get('/home', [EntryController::class, 'index'])->name('home');
+
+    // Tag filter: /home/@person or /home/#project
+    Route::get('/home/{tagSlug}', [EntryController::class, 'index'])
+        ->where('tagSlug', '[@#][^/]+')
+        ->name('home.tag');
+
+    // Date filter: /home/2026-01-28
+    Route::get('/home/{dateSlug}', [EntryController::class, 'index'])
+        ->where('dateSlug', '\d{4}-\d{2}-\d{2}')
+        ->name('home.date');
+
+    // Combined: /home/@person/2026-01-28
+    Route::get('/home/{tagSlug}/{dateSlug}', [EntryController::class, 'index'])
+        ->where(['tagSlug' => '[@#][^/]+', 'dateSlug' => '\d{4}-\d{2}-\d{2}'])
+        ->name('home.tag.date');
+
     Route::post('/entries', [EntryController::class, 'store'])->name('entries.store');
     Route::delete('/entries/{entry}', [EntryController::class, 'destroy'])->name('entries.destroy');
 
