@@ -18,6 +18,8 @@ class Entry extends Model
 
     protected $casts = [
         'has_images' => 'boolean',
+        'content' => 'encrypted',
+        'content_html' => 'encrypted',
     ];
 
     // Serialize created_at in America/New_York timezone for frontend

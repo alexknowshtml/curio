@@ -200,12 +200,15 @@ class EntryController extends Controller
             return response()->json([]);
         }
 
+        // Content is encrypted at rest, so we load entries and filter in PHP
+        $searchTerm = mb_strtolower($query);
         $entries = Entry::where('user_id', Auth::id())
-            ->where('content', 'like', '%' . $query . '%')
             ->with(['tags', 'attachments'])
             ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get();
+            ->get()
+            ->filter(fn($entry) => str_contains(mb_strtolower($entry->content ?? ''), $searchTerm))
+            ->take(20)
+            ->values();
 
         return response()->json($entries);
     }
