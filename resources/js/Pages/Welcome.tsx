@@ -4,17 +4,21 @@ import { Head, Link } from '@inertiajs/react';
 export default function Welcome({
     auth,
 }: PageProps) {
+    const entries = [
+        { text: "have you ever noticed that it's easier to start typing into an empty chat box than a blank document?", time: "9:46 PM" },
+        { text: "maybe it's because i grew up in chat rooms, or because i wrote many books worth of my best work 140 characters at a time on twitter", time: "9:47 PM" },
+        { text: "but for a lot of us, the easiest drafting mode is a tiny text box.", time: "9:47 PM" },
+        { text: "that's why i made curio, a simple chat ui for turning your inner monologue into something more useful than anxiety", time: "9:48 PM" },
+    ];
+
     return (
         <>
             <Head title="Curio" />
             <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex flex-col">
-                {/* Simple header */}
-                <header className="p-6">
-                    <div className="max-w-4xl mx-auto flex justify-between items-center">
+                {/* Header mimicking the app */}
+                <header className="border-b border-stone-200/50 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-sm">
+                    <div className="flex items-center justify-between h-14 px-4 max-w-4xl mx-auto w-full">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-stone-800 dark:bg-stone-200 flex items-center justify-center">
-                                <span className="text-stone-100 dark:text-stone-800 font-semibold text-sm">C</span>
-                            </div>
                             <span className="text-lg font-semibold text-stone-800 dark:text-stone-100">Curio</span>
                         </div>
                         <nav className="flex gap-2">
@@ -45,39 +49,67 @@ export default function Welcome({
                     </div>
                 </header>
 
-                {/* Hero section */}
-                <main className="flex-1 flex items-center justify-center px-6">
-                    <div className="max-w-2xl text-center">
-                        <h1 className="text-4xl sm:text-5xl font-bold text-stone-800 dark:text-stone-100 mb-6">
-                            A quieter place for your thoughts
-                        </h1>
-                        <p className="text-lg text-stone-600 dark:text-stone-400 mb-8 max-w-lg mx-auto">
-                            Curio is a simple, personal journal that stays out of your way.
-                            No likes, no followers, no algorithm. Just you and your thoughts.
-                        </p>
-                        {!auth.user && (
-                            <div className="flex gap-3 justify-center">
-                                <Link
-                                    href={route('register')}
-                                    className="px-6 py-3 rounded-xl bg-stone-800 dark:bg-stone-200 text-stone-100 dark:text-stone-800 font-medium hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
-                                >
-                                    Start writing
-                                </Link>
-                                <Link
-                                    href={route('login')}
-                                    className="px-6 py-3 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-400 font-medium hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                                >
-                                    Sign in
-                                </Link>
+                {/* Stream-style content */}
+                <main className="flex-1 overflow-auto">
+                    <div className="max-w-2xl mx-auto px-4 py-8">
+                        {/* Date header */}
+                        <div className="text-center mb-6">
+                            <span className="text-xs text-stone-500 dark:text-stone-500 bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full">
+                                Today
+                            </span>
+                        </div>
+
+                        {/* Entries */}
+                        <div className="space-y-4">
+                            {entries.map((entry, i) => (
+                                <div key={i} className="group">
+                                    <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
+                                        <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
+                                            {entry.text}
+                                        </p>
+                                    </div>
+                                    <div className="text-right mt-1 pr-2">
+                                        <span className="text-xs text-stone-400 dark:text-stone-500">
+                                            {entry.time}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* CTA entry */}
+                            <div className="group">
+                                <div className="bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 shadow-sm border border-stone-100 dark:border-stone-700/50">
+                                    <p className="text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
+                                        it's free to try at{' '}
+                                        <Link
+                                            href={route('register')}
+                                            className="text-amber-600 dark:text-amber-500 hover:underline"
+                                        >
+                                            curio.stackingthebricks.com
+                                        </Link>
+                                    </p>
+                                </div>
+                                <div className="text-right mt-1 pr-2">
+                                    <span className="text-xs text-stone-400 dark:text-stone-500">
+                                        9:49 PM
+                                    </span>
+                                </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </main>
 
-                {/* Simple footer */}
-                <footer className="p-6 text-center text-sm text-stone-500 dark:text-stone-500">
-                    A personal project
-                </footer>
+                {/* Fake input area */}
+                <div className="border-t border-stone-200/50 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
+                    <div className="max-w-2xl mx-auto">
+                        <Link
+                            href={route('register')}
+                            className="block w-full bg-white dark:bg-stone-800 rounded-2xl px-4 py-3 text-stone-400 dark:text-stone-500 text-[15px] border border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 transition-colors cursor-pointer"
+                        >
+                            What's obvious here?
+                        </Link>
+                    </div>
+                </div>
             </div>
         </>
     );
