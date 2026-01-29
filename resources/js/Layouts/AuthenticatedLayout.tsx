@@ -51,15 +51,9 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                 if (scrollContainer) {
                                     scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
                                 }
-                            } else if (hasPathFilters || hasQueryFilters) {
-                                // Navigate to home (clears filters)
-                                router.visit('/home', { preserveState: false });
                             } else {
-                                // Just scroll to bottom
-                                const scrollContainer = document.querySelector('[data-stream-container]');
-                                if (scrollContainer) {
-                                    scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
-                                }
+                                // Navigate to home (clears any filters or leaves other pages)
+                                router.visit('/home', { preserveState: false });
                             }
                         }}
                         className="text-lg font-semibold text-stone-800 dark:text-stone-100 tracking-tight flex-shrink-0"
