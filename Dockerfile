@@ -1,5 +1,13 @@
 FROM php:8.4-apache
 
+# Distrust the compromised eMudhra intermediate CAs (alexknowshtml/andy#1151).
+# Debian ca-certificates 20250419+deb13u1 drops the two roots they chain to;
+# the sed covers a base image that still ships the older package.
+RUN apt-get update && apt-get install -y --only-upgrade ca-certificates \
+    && sed -i -E 's#^(mozilla/(emSign_ECC_Root_CA_-_G3|Comodo_AAA_Services_root)\.crt)$#!\1#' /etc/ca-certificates.conf \
+    && update-ca-certificates --fresh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
