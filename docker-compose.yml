@@ -41,3 +41,6 @@ services:
 networks:
   curio:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
